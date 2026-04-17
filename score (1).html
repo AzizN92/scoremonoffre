@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
 :root{
   --primary:#3B30E8;--primary-light:#EEF0FF;--primary-dark:#2920C4;
   --accent:#F5A623;--green:#16A34A;--red:#DC2626;--yellow:#D97706;
@@ -992,7 +992,7 @@ Tu es le Coach Societiz — pas ChatGPT. Tu as 2 ans d'expérience avec des cent
 ${getSocietizPitch(lang)}
 ${lang==='ar'?'أعطني 3 أمثلة ملموسة وقصيرة مناسبة للسوق المغربي. بدون مقدمات. استخدم الأرقام والتفاصيل.':lang==='en'?'Give me 3 concrete short examples relevant to the Moroccan market. No preamble. Use numbers and details.':'Donne-moi 3 exemples concrets et courts pertinents pour le marché marocain. Sans préambule. Utilise des chiffres et des détails.'}`;
   try{
-    const res=await fetch('http://localhost:3001/api/chat',{
+    const res=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
         messages:[{role:'user',content:contextPrompt}]})
@@ -1012,7 +1012,7 @@ async function sendAssist(){
   document.getElementById('assist-send').disabled=true;
   addAssistTyping();
   try{
-    const res=await fetch('http://localhost:3001/api/chat',{
+    const res=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,
         system:currentAssistContext,
@@ -1246,7 +1246,7 @@ async function sendMainChat(){
   td.innerHTML='<div class="cmsg-av b">🤖</div><div class="cbubble b"><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
   msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
   try{
-    const res=await fetch('http://localhost:3001/api/chat',{
+    const res=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,
         system:mainChatHistory[0].content,
