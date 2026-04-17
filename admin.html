@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — Societiz Score</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAFAFA;color:#111827;min-height:100vh}
+:root{--primary:#3B30E8;--primary-light:#EEF0FF;--border:#E5E7EB;--text2:#6B7280}
+.login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
+.login-card{background:#fff;border-radius:20px;padding:40px;display:flex;flex-direction:column;gap:16px;align-items:center;box-shadow:0 4px 24px rgba(0,0,0,.08);width:340px}
+.login h1{font-size:22px;font-weight:800;color:var(--primary)}
+.login p{font-size:14px;color:var(--text2);text-align:center}
+.login input{padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-size:15px;width:100%;outline:none;transition:border .2s}
+.login input:focus{border-color:var(--primary)}
+.login button{background:var(--primary);color:#fff;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;width:100%;transition:opacity .2s}
+.login button:hover{opacity:.9}
+.err{color:#DC2626;font-size:13px;text-align:center}
+.dashboard{display:none;padding:24px 32px}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.dash-header h1{font-size:22px;font-weight:800;color:var(--primary)}
+.dash-meta{font-size:14px;color:var(--text2)}
+.actions{display:flex;gap:10px;margin-bottom:16px}
+.btn{padding:9px 18px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-outline{background:#fff;color:var(--primary);border:2px solid var(--primary)}
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#F9FAFB;padding:12px 16px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none}
+th:hover{color:var(--primary)}
+td{padding:12px 16px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F9FAFB}
+.score-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-weight:700;font-size:12px}
+.score-high{background:#DCFCE7;color:#16A34A}
+.score-mid{background:#FEF9C3;color:#D97706}
+.score-low{background:#FEE2E2;color:#DC2626}
+.empty{text-align:center;padding:48px;color:var(--text2);font-size:15px}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+@media(max-width:600px){.dashboard{padding:16px}.dash-header h1{font-size:18px}}
+</style>
+</head>
+<body>
+
+<div class="login" id="loginSection">
+  <div class="login-card">
+    <h1>🔒 Admin Societiz</h1>
+    <p>Tableau de bord des leads</p>
+    <input type="password" id="pwdInput" placeholder="Mot de passe admin" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Accéder</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="dashboard" id="dashSection">
+  <div class="dash-header">
+    <div>
+      <h1>Leads Societiz Score</h1>
+      <div class="dash-meta" id="totalCount"></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="loadLeads()">↻ Rafraîchir</button>
+      <button class="btn btn-outline" onclick="exportCSV()">↓ Export CSV</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="leadsTable">
+      <thead>
+        <tr>
+          <th onclick="sortBy('prenom')">Nom ↕</th>
+          <th onclick="sortBy('email')">Email ↕</th>
+          <th onclick="sortBy('whatsapp')">WhatsApp ↕</th>
+          <th onclick="sortBy('domaine')">Domaine ↕</th>
+          <th onclick="sortBy('niche')">Niche ↕</th>
+          <th onclick="sortBy('score')">Score ↕</th>
+          <th onclick="sortBy('followers')">Followers ↕</th>
+          <th onclick="sortBy('reseau')">Réseau ↕</th>
+          <th onclick="sortBy('date')">Date ↕</th>
+        </tr>
+      </thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let pwd = '';
+let leads = [];
+let sortKey = 'date';
+let sortDir = -1;
+
+function doLogin() {
+  pwd = document.getElementById('pwdInput').value;
+  document.getElementById('loginErr').textContent = '';
+  loadLeads();
+}
+
+async function loadLeads() {
+  try {
+    const res = await fetch('/api/admin/leads', { headers: { 'x-admin-password': pwd } });
+    if (res.status === 401) {
+      document.getElementById('loginErr').textContent = 'Mot de passe incorrect';
+      return;
+    }
+    leads = await res.json();
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('dashSection').style.display = 'block';
+    const cnt = leads.length;
+    const avg = cnt ? Math.round(leads.reduce((s, l) => s + (+l.score || 0), 0) / cnt) : 0;
+    document.getElementById('totalCount').textContent = `${cnt} lead${cnt !== 1 ? 's' : ''} · Score moyen : ${avg}/100`;
+    renderTable();
+  } catch (e) {
+    document.getElementById('loginErr').textContent = 'Erreur de connexion';
+  }
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = (key === 'score' || key === 'followers') ? -1 : 1; }
+  renderTable();
+}
+
+function renderTable() {
+  const sorted = [...leads].sort((a, b) => {
+    let va = a[sortKey] ?? '', vb = b[sortKey] ?? '';
+    if (sortKey === 'score' || sortKey === 'followers') { va = +va; vb = +vb; }
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+  const body = document.getElementById('leadsBody');
+  if (!sorted.length) {
+    body.innerHTML = `<tr><td colspan="9" class="empty">Aucun lead pour l'instant</td></tr>`;
+    return;
+  }
+  body.innerHTML = sorted.map(l => {
+    const s = +l.score;
+    const cls = s >= 70 ? 'score-high' : s >= 50 ? 'score-mid' : 'score-low';
+    const date = l.date ? new Date(l.date).toLocaleDateString('fr-FR') : '—';
+    return `<tr>
+      <td><strong>${l.prenom || ''} ${l.nom || ''}</strong></td>
+      <td><a href="mailto:${l.email || ''}">${l.email || '—'}</a></td>
+      <td>${l.whatsapp || '—'}</td>
+      <td>${l.domaine || '—'}</td>
+      <td>${l.niche || '—'}</td>
+      <td><span class="score-badge ${cls}">${s}/100</span></td>
+      <td>${Number(l.followers || 0).toLocaleString('fr-FR')}</td>
+      <td>${l.reseau || '—'}</td>
+      <td>${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportCSV() {
+  const headers = ['Prénom','Nom','Email','WhatsApp','Domaine','Réseau','Lien profil','Followers','Niche','Score','Date'];
+  const rows = leads.map(l =>
+    [l.prenom,l.nom,l.email,l.whatsapp,l.domaine,l.reseau,l.lienProfil,l.followers,l.niche,l.score,l.date]
+      .map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')
+  );
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = `leads-societiz-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>
