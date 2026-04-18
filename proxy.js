@@ -18,6 +18,23 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 if (!ADMIN_PASSWORD) throw new Error('ADMIN_PASSWORD env var is required');
 const LEADS_FILE = path.join(__dirname, 'leads.json');
 
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_SERVICE_KEY);
+
+if (SUPABASE_ENABLED) {
+  console.log('Supabase connected');
+} else {
+  console.log('Supabase disabled — using local leads.json');
+}
+
+const supabaseHeaders = {
+  'apikey': SUPABASE_SERVICE_KEY,
+  'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=minimal',
+};
+
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
@@ -53,7 +70,7 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-app.post('/api/leads', leadsLimiter, (req, res) => {
+app.post('/api/leads', leadsLimiter, async (req, res) => {
   const { firstname, lastname, email } = req.body || {};
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!firstname || !lastname || !email) {
@@ -65,11 +82,38 @@ app.post('/api/leads', leadsLimiter, (req, res) => {
   if ([firstname, lastname, email].some(f => typeof f !== 'string' || f.length > 200)) {
     return res.status(400).json({ error: 'Field exceeds maximum length of 200 characters' });
   }
+
+  const payload = { ...req.body };
+  if ('followers' in payload) {
+    const parsed = parseInt(payload.followers, 10);
+    payload.followers = isNaN(parsed) ? null : parsed;
+  }
+  if (typeof payload.answers === 'string') {
+    try { payload.answers = JSON.parse(payload.answers); } catch (_) { payload.answers = null; }
+  }
+
+  if (SUPABASE_ENABLED) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+        method: 'POST',
+        headers: supabaseHeaders,
+        body: JSON.stringify(payload),
+      });
+      if (!sbRes.ok) {
+        const errText = await sbRes.text();
+        throw new Error(`Supabase ${sbRes.status}: ${errText}`);
+      }
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error('Supabase lead save error, falling back to local:', err.message);
+    }
+  }
+
   try {
     const leads = fs.existsSync(LEADS_FILE)
       ? JSON.parse(fs.readFileSync(LEADS_FILE, 'utf8'))
       : [];
-    leads.push({ ...req.body, date: new Date().toISOString() });
+    leads.push({ ...payload, date: new Date().toISOString() });
     fs.writeFileSync(LEADS_FILE, JSON.stringify(leads, null, 2));
     res.json({ ok: true });
   } catch (err) {
@@ -78,10 +122,28 @@ app.post('/api/leads', leadsLimiter, (req, res) => {
   }
 });
 
-app.get('/api/admin/leads', adminLimiter, (req, res) => {
+app.get('/api/admin/leads', adminLimiter, async (req, res) => {
   if (req.headers['x-admin-password'] !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+
+  if (SUPABASE_ENABLED) {
+    try {
+      const sbRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?order=created_at.desc`, {
+        method: 'GET',
+        headers: supabaseHeaders,
+      });
+      if (!sbRes.ok) {
+        const errText = await sbRes.text();
+        throw new Error(`Supabase ${sbRes.status}: ${errText}`);
+      }
+      const leads = await sbRes.json();
+      return res.json(leads);
+    } catch (err) {
+      console.error('Supabase read error, falling back to local:', err.message);
+    }
+  }
+
   try {
     const leads = fs.existsSync(LEADS_FILE)
       ? JSON.parse(fs.readFileSync(LEADS_FILE, 'utf8'))
