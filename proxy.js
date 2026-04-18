@@ -63,6 +63,9 @@ app.post('/api/chat', async (req, res) => {
       body: JSON.stringify(req.body),
     });
     const data = await response.json();
+    if (!response.ok) {
+      console.error('Anthropic API error:', response.status, JSON.stringify(data));
+    }
     res.status(response.status).json(data);
   } catch (err) {
     console.error('Proxy error:', err);

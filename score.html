@@ -886,7 +886,15 @@ async function sendChat() {
     });
     const data = await res.json();
     document.getElementById('chatTyping')?.remove();
-    const reply = data.content?.[0]?.text || 'Je n\'ai pas pu répondre, réessaie.';
+    let reply;
+    if (!res.ok || !data.content?.[0]?.text) {
+      if (res.status === 401) reply = 'Problème de configuration, contactez l\'administrateur.';
+      else if (res.status === 429) reply = 'Trop de requêtes, réessaie dans quelques secondes.';
+      else if (res.status === 529) reply = 'Service temporairement surchargé, réessaie dans 30 secondes.';
+      else reply = 'Je n\'ai pas pu répondre, réessaie.';
+    } else {
+      reply = data.content[0].text;
+    }
     addChatMsg('b', reply);
     chatHistory.push({ role: 'assistant', content: reply });
 
