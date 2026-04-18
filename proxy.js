@@ -7,7 +7,13 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const API_KEY = process.env.ANTHROPIC_API_KEY;
+
+// Nettoie la clé API : retire retours à la ligne, espaces, = au début
+const RAW_KEY = process.env.ANTHROPIC_API_KEY || '';
+const API_KEY = RAW_KEY.replace(/[\r\n\s]/g, '').replace(/^=+/, '');
+if (!API_KEY) console.error('WARNING: ANTHROPIC_API_KEY is empty');
+else console.log('API key loaded, length:', API_KEY.length, 'starts with:', API_KEY.substring(0, 12));
+
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 if (!ADMIN_PASSWORD) throw new Error('ADMIN_PASSWORD env var is required');
 const LEADS_FILE = path.join(__dirname, 'leads.json');
