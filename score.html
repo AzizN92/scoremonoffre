@@ -1111,6 +1111,29 @@ function downloadPDF() {
     y += 6;
   });
 
+  // Recommandation de prix
+  const pricingAnswer = answers.find(a => a.id === 'pricing');
+  if (pricingAnswer) {
+    let prixReco = '';
+    if (pricingAnswer.text.startsWith('Do It Yourself')) prixReco = 'Prix recommande : 19$ - 49$ / mois';
+    else if (pricingAnswer.text.startsWith('Do It With You')) prixReco = 'Prix recommande : 49$ - 99$ / mois';
+    else if (pricingAnswer.text.startsWith('Do It For You')) prixReco = 'Prix recommande : 100$+ / mois';
+    if (prixReco) {
+      checkPage(24);
+      y += 8;
+      doc.setFillColor(238, 240, 255);
+      doc.roundedRect(20, y, W - 40, 18, 3, 3, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(59, 48, 232);
+      doc.text('Recommandation de prix', 28, y + 7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(17, 24, 39);
+      doc.text(prixReco, 28, y + 14);
+      y += 22;
+    }
+  }
+
   // Footer — sur la dernière page après le contenu
   checkPage(30);
   y += 8;
