@@ -1371,7 +1371,7 @@ ${lang==='ar'?'أعطني 3 أمثلة ملموسة وقصيرة مناسبة ل
   try{
     const res=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,
+      body:JSON.stringify({model:'claude-sonnet-4-5-20250929',max_tokens:400,
         messages:[{role:'user',content:contextPrompt}]})
     });
     const data=await res.json();
@@ -1391,7 +1391,7 @@ async function sendAssist(){
   try{
     const res=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,
+      body:JSON.stringify({model:'claude-sonnet-4-5-20250929',max_tokens:300,
         system:currentAssistContext,
         messages:assistHistory})
     });
@@ -1513,7 +1513,7 @@ async function sendMainChat(){
   try{
     const res=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
+      body:JSON.stringify({model:'claude-sonnet-4-5-20250929',max_tokens:500,
         system:mainChatHistory[0].content,
         messages:mainChatHistory.slice(1).filter(m=>m.role!=='system').concat([{role:'user',content:msg}])})
     });
