@@ -1,1155 +1,1474 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<title>Societiz Score — Teste ton offre</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Societiz — Score ton offre</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
+html,body{height:100%;overflow:hidden}
 :root{
   --primary:#3B30E8;--primary-light:#EEF0FF;--primary-dark:#2920C4;
   --accent:#F5A623;--green:#16A34A;--red:#DC2626;--yellow:#D97706;
   --bg:#FAFAFA;--surface:#FFFFFF;--border:#E5E7EB;
   --text:#111827;--text2:#6B7280;--text3:#9CA3AF;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
-.page{display:none;min-height:100vh;flex-direction:column}
-.page.active{display:flex}
+body{font-family:'Nunito','Noto Sans Arabic',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+[dir=rtl] body{font-family:'Noto Sans Arabic','Nunito',sans-serif}
 
-/* NAV BAR */
-.navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.navbar-logo{font-size:18px;font-weight:800;color:var(--primary)}
-.progress-wrap{flex:1;margin:0 24px}
-.progress-track{background:var(--border);border-radius:99px;height:6px}
-.progress-fill{background:var(--primary);height:6px;border-radius:99px;transition:width .4s ease}
-.progress-label{font-size:12px;color:var(--text2);margin-top:4px;text-align:right}
+/* TOPBAR */
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;z-index:100}
+.logo-img{height:30px;width:auto}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.lang-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text2);font-family:inherit;transition:all .15s}
+.lang-btn.active{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
 
-/* HERO */
-.hero{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:48px 24px 40px;text-align:center}
-.hero h1{font-size:28px;font-weight:800;line-height:1.25;margin-bottom:12px}
-.hero p{font-size:16px;opacity:.9;max-width:480px;margin:0 auto}
-.hero-badge{display:inline-block;background:rgba(255,255,255,.2);padding:6px 16px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:20px}
+/* PROGRESS */
+.progress-wrap{height:5px;background:var(--border);flex-shrink:0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#7C3AED);transition:width .5s cubic-bezier(.4,0,.2,1);width:0%}
 
-/* CARD */
-.card{background:var(--surface);border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06);padding:32px;margin:24px auto;max-width:560px;width:calc(100% - 32px)}
+/* MAIN */
+.main{flex:1;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;opacity:0;pointer-events:none;transform:translateY(28px);transition:all .4s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+.screen.active{opacity:1;pointer-events:all;transform:translateY(0)}
+.screen.exit{opacity:0;transform:translateY(-28px)}
 
-/* FORM */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-group.full{grid-column:1/-1}
-.form-group label{font-size:13px;font-weight:600;color:var(--text2)}
-.form-group input,.form-group select{padding:12px 14px;border:2px solid var(--border);border-radius:10px;font-size:15px;outline:none;transition:border .2s;background:#fff;color:var(--text)}
-.form-group input:focus,.form-group select:focus{border-color:var(--primary)}
-.form-group input.err,.form-group select.err{border-color:var(--red)}
-
-/* BTN */
-.btn-primary{background:var(--primary);color:#fff;padding:15px 32px;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;width:100%;transition:opacity .2s;margin-top:8px}
-.btn-primary:hover{opacity:.9}
-.btn-secondary{background:var(--primary-light);color:var(--primary);padding:13px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s}
-.btn-secondary:hover{opacity:.8}
-.btn-ghost{background:transparent;color:var(--text2);padding:10px;border:none;font-size:14px;cursor:pointer}
-
-/* NICHE GRID */
-.niche-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px}
-.niche-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:18px 14px;cursor:pointer;transition:all .2s;text-align:center}
-.niche-card:hover{border-color:var(--primary);background:var(--primary-light)}
-.niche-card.selected{border-color:var(--primary);background:var(--primary-light)}
-.niche-emoji{font-size:28px;margin-bottom:8px}
-.niche-label{font-size:13px;font-weight:600;color:var(--text)}
+/* INTRO */
+.intro-wrap{max-width:660px;width:100%;text-align:center}
+.dots-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px}
+.dot{width:10px;height:10px;border-radius:50%}
+.intro-badge{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);color:var(--primary);font-size:11px;font-weight:800;padding:5px 14px;border-radius:999px;margin-bottom:16px;text-transform:uppercase;letter-spacing:.6px}
+.intro-h1{font-size:clamp(24px,4vw,42px);font-weight:900;line-height:1.2;margin-bottom:14px}
+.intro-h1 span{color:var(--primary)}
+.intro-p{font-size:14px;color:var(--text2);line-height:1.7;max-width:500px;margin:0 auto 16px}
+.time-pill{display:inline-flex;align-items:center;gap:6px;background:#FEF9C3;color:#92400E;font-size:12px;font-weight:700;padding:6px 16px;border-radius:999px;margin-bottom:16px;border:1px solid #FDE68A}
+.alert-box{background:linear-gradient(135deg,#FFF7ED,#FEF3C7);border:1.5px solid #F59E0B;border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;text-align:left;max-width:500px;margin-left:auto;margin-right:auto}
+[dir=rtl] .alert-box{text-align:right}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-text{font-size:13px;line-height:1.6;color:#92400E;font-weight:600}
+.alert-text strong{color:#78350F}
+.mrr-box{background:linear-gradient(135deg,var(--primary),#6366F1);border-radius:14px;padding:18px 22px;color:#fff;display:flex;align-items:center;justify-content:space-between;max-width:500px;margin:0 auto 22px;gap:16px}
+[dir=rtl] .mrr-box{flex-direction:row-reverse}
+.mrr-left .mrr-num{font-size:34px;font-weight:900;direction:ltr;unicode-bidi:isolate}
+.mrr-left .mrr-sub{font-size:11px;opacity:.8;margin-top:2px}
+.mrr-right{font-size:12px;opacity:.85;line-height:1.6;max-width:240px;text-align:left}
+[dir=rtl] .mrr-right{text-align:right}
+.start-btn{background:var(--primary);color:#fff;border:none;border-radius:14px;padding:15px 40px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 6px 24px rgba(59,48,232,.35)}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(59,48,232,.45)}
 
 /* QUESTION */
-.q-header{text-align:center;margin-bottom:24px}
-.q-num{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-.q-text{font-size:20px;font-weight:700;line-height:1.4;color:var(--text)}
-.choices{display:flex;flex-direction:column;gap:10px;margin-top:4px}
-.choice-btn{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:16px 18px;text-align:left;font-size:15px;color:var(--text);cursor:pointer;transition:all .2s;line-height:1.4}
-.choice-btn:hover{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
-.choice-btn.autre{border-color:var(--accent);color:var(--accent)}
-.choice-btn.autre:hover{background:#FFF8EE}
-.choice-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff}
+.q-wrap{max-width:600px;width:100%}
+.q-step{font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.q-step-dot{width:6px;height:6px;border-radius:50%;background:var(--primary)}
+.q-title{font-size:clamp(19px,3.2vw,28px);font-weight:900;line-height:1.25;margin-bottom:6px}
+.q-hint{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.q-input{width:100%;border:2px solid var(--border);border-radius:12px;padding:13px 16px;font-size:14px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s;resize:none;line-height:1.6}
+.q-input:focus{border-color:var(--primary)}
+.q-input::placeholder{color:var(--text3)}
+.choices{display:flex;flex-direction:column;gap:9px}
+.choice{display:flex;align-items:center;gap:12px;padding:13px 16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;font-size:14px;font-weight:600;color:var(--text2);background:var(--surface)}
+.choice:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);transform:translateX(4px)}
+[dir=rtl] .choice:hover{transform:translateX(-4px)}
+.choice.sel-yes{border-color:var(--green);background:#F0FDF4;color:var(--green)}
+.choice.sel-no{border-color:var(--red);background:#FFF1F1;color:var(--red)}
+.choice.sel{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.choice-key{width:26px;height:26px;border-radius:7px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+.choice.sel .choice-key,.choice.sel-yes .choice-key,.choice.sel-no .choice-key{background:currentColor;color:#fff}
+.q-nav{display:flex;align-items:center;justify-content:space-between;margin-top:20px;flex-wrap:wrap;gap:10px}
+.q-next{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 14px rgba(59,48,232,.3)}
+.q-next:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.q-back{background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text2);transition:all .2s}
+.q-back:hover{border-color:var(--text2);color:var(--text)}
+.enter-hint{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.enter-key{background:var(--border);border-radius:4px;padding:2px 6px;font-size:10px;font-weight:700}
+.reaction{margin-top:12px;animation:fadeUp .3s ease}
+.rbadge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700}
+.rbadge.good{background:#DCFCE7;color:#15803D}
+.rbadge.warn{background:#FEF9C3;color:#A16207}
+.rbadge.bad{background:#FEE2E2;color:#B91C1C}
+.rbadge.neutral{background:var(--primary-light);color:var(--primary)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ASSIST BUTTON */
+.assist-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text2);margin-top:10px;transition:all .2s}
+.assist-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+
+/* ASSIST PANEL */
+.assist-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);z-index:200;display:none;align-items:flex-end;justify-content:center;padding:16px}
+.assist-overlay.open{display:flex}
+.assist-panel{background:var(--surface);border-radius:20px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.assist-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.assist-title{font-size:14px;font-weight:800;color:var(--text)}
+.assist-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);line-height:1}
+.assist-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+.amsg{display:flex;gap:8px;align-items:flex-end;animation:fadeUp .2s ease}
+.amsg.u{flex-direction:row-reverse}
+.amsg-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.amsg-av.b{background:linear-gradient(135deg,var(--primary),#6366F1)}
+.amsg-av.u{background:var(--accent)}
+.amsg-bubble{max-width:82%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.6}
+.amsg-bubble.b{background:var(--bg);border:1px solid var(--border);border-bottom-left-radius:3px}
+.amsg-bubble.u{background:var(--primary);color:#fff;border-bottom-right-radius:3px}
+.assist-inp-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border)}
+.assist-inp{flex:1;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;background:var(--bg)}
+.assist-inp:focus{border-color:var(--primary);background:#fff}
+.assist-send{background:var(--primary);border:none;border-radius:9px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.assist-send:disabled{opacity:.4;cursor:not-allowed}
+.assist-send svg{width:14px;height:14px;fill:#fff}
+.tdots{display:flex;gap:3px;padding:3px 0}
+.td{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:bounce .9s infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:scale(1);opacity:.5}40%{transform:scale(1.3);opacity:1}}
+
+/* PRICING */
+.pricing-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.price-card{border:2px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;background:var(--surface)}
+.price-card:hover{border-color:var(--primary);background:var(--primary-light)}
+.price-card.sel{border-color:var(--primary);background:var(--primary-light)}
+.price-card-icon{font-size:20px;margin-bottom:6px}
+.price-card-title{font-size:12px;font-weight:800;color:var(--text);margin-bottom:3px}
+.price-card-range{font-size:11px;color:var(--primary);font-weight:700;margin-bottom:4px}
+.price-card-desc{font-size:10px;color:var(--text2);line-height:1.4}
+.price-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.price-input-wrap{background:var(--bg);border-radius:10px;padding:12px}
+.price-input-label{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.price-input-row{display:flex;align-items:center;gap:6px}
+.price-input-row span{font-size:14px;font-weight:800;color:var(--primary)}
+.price-inp{border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:15px;font-weight:800;font-family:inherit;color:var(--text);background:var(--surface);outline:none;width:100%;transition:border-color .2s}
+.price-inp:focus{border-color:var(--primary)}
+.price-tip{background:var(--primary-light);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--primary);font-weight:600;line-height:1.6;display:none}
+.price-tip.show{display:block}
+
+/* NICHE */
+.niche-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.niche-card{border:2px solid var(--border);border-radius:10px;padding:10px 13px;cursor:pointer;transition:all .2s;background:var(--surface);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text2)}
+.niche-card:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.niche-card.sel{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.niche-icon{font-size:16px;flex-shrink:0}
+
+/* NOT GPT PILL */
+.not-gpt-pill{display:inline-flex;align-items:center;gap:5px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:999px;padding:4px 12px;font-size:11px;font-weight:700;color:#15803D;margin-top:6px;margin-left:8px}
+
+/* FORMULA */
+.formula-wrap{max-width:600px;width:100%}
+.formula-box{background:var(--primary-light);border:2px solid rgba(59,48,232,.15);border-radius:14px;padding:20px;margin-bottom:16px}
+.formula-label{font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.formula-text{font-size:15px;font-weight:700;color:var(--text);line-height:2.3}
+.f-inp{background:#fff;border:1.5px dashed rgba(59,48,232,.3);border-radius:7px;padding:2px 10px;font-size:13px;font-weight:700;color:var(--primary);font-family:inherit;outline:none;min-width:100px;max-width:180px;transition:all .2s}
+.f-inp:focus{border-color:var(--primary);border-style:solid}
+.f-inp::placeholder{color:rgba(59,48,232,.4);font-weight:600}
 
 /* RESULT */
-.score-circle{width:140px;height:140px;border-radius:50%;background:conic-gradient(var(--primary) calc(var(--pct)*1%),var(--border) 0);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;position:relative}
-.score-inner{width:110px;height:110px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center}
-.score-num{font-size:32px;font-weight:900;color:var(--primary)}
-.score-denom{font-size:14px;color:var(--text2);margin-top:-4px}
-.score-label{font-size:18px;font-weight:700;text-align:center;margin-bottom:20px}
-.breakdown{display:flex;flex-direction:column;gap:8px;margin:16px 0}
-.breakdown-row{display:flex;align-items:center;gap:10px}
-.breakdown-label{font-size:13px;color:var(--text2);flex:1;min-width:0}
-.breakdown-bar{flex:2;height:8px;background:var(--border);border-radius:99px;overflow:hidden}
-.breakdown-fill{height:8px;border-radius:99px;background:var(--primary);transition:width .6s ease}
-.breakdown-pts{font-size:13px;font-weight:700;color:var(--text);min-width:40px;text-align:right}
-.tag-list{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.tag{padding:6px 14px;border-radius:99px;font-size:13px;font-weight:600}
-.tag-green{background:#DCFCE7;color:var(--green)}
-.tag-red{background:#FEE2E2;color:var(--red)}
-.cta-box{border-radius:16px;padding:24px;text-align:center;margin-top:16px}
-.cta-green{background:#DCFCE7}
-.cta-yellow{background:#FEF9C3}
-.cta-box h3{font-size:17px;font-weight:700;margin-bottom:8px}
-.cta-box p{font-size:14px;color:var(--text2);margin-bottom:16px}
-.btn-cta{display:inline-block;background:var(--primary);color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;cursor:pointer;border:none;transition:opacity .2s}
-.btn-cta:hover{opacity:.9}
-.btn-pdf{background:var(--surface);color:var(--primary);border:2px solid var(--primary);padding:13px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s;margin-top:10px;width:100%}
-.btn-pdf:hover{opacity:.8}
+.result-wrap{max-width:600px;width:100%;text-align:center;padding-bottom:24px}
+.score-ring{width:140px;height:140px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 18px;position:relative}
+.score-ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--rc,var(--primary)) var(--rd,0deg),#E5E7EB var(--rd,0deg));transition:all 1.2s ease}
+.score-ring::after{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--surface)}
+.score-inner{position:relative;z-index:1}
+.score-big{font-size:42px;font-weight:900;line-height:1}
+.score-sub{font-size:12px;color:var(--text2);font-weight:600}
+.res-title{font-size:22px;font-weight:900;margin-bottom:8px}
+.res-sub{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6;max-width:440px;margin-left:auto;margin-right:auto}
+.blocks-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.bcard{background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1.5px solid var(--border)}
+.bcard.g{border-color:#BBF7D0;background:#F0FDF4}.bcard.w{border-color:#FDE68A;background:#FFFBEB}.bcard.b{border-color:#FECACA;background:#FFF1F1}
+.bcard-num{font-size:20px;font-weight:900}
+.bcard.g .bcard-num{color:var(--green)}.bcard.w .bcard-num{color:var(--yellow)}.bcard.b .bcard-num{color:var(--red)}
+.bcard-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.recos{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
+[dir=rtl] .recos{text-align:right}
+.reco{display:flex;gap:9px;padding:11px 13px;border-radius:10px;font-size:13px;line-height:1.6;align-items:flex-start}
+.reco.g{background:#F0FDF4;border:1px solid #BBF7D0}.reco.w{background:#FFFBEB;border:1px solid #FDE68A}.reco.b{background:#FFF1F1;border:1px solid #FECACA}
+.reco-ico{font-size:15px;flex-shrink:0;margin-top:1px}
+.cta-box{border-radius:14px;padding:22px;color:#fff;text-align:center;margin-bottom:10px}
+.cta-box h3{font-size:17px;font-weight:900;margin-bottom:6px}
+.cta-box p{font-size:12px;opacity:.85;margin-bottom:14px;line-height:1.6}
+.cta-box-btn{background:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s}
+.cta-box-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.open-chat-link{background:none;border:none;font-size:13px;color:var(--primary);font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;margin-top:8px}
 
-/* CHATBOT */
-.chat-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;justify-content:center}
-.chat-overlay.open{display:flex}
-.chat-panel{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:560px;height:75vh;display:flex;flex-direction:column;padding:0 0 env(safe-area-inset-bottom)}
-.chat-top{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.chat-title{font-size:16px;font-weight:700;color:var(--primary)}
-.chat-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px}
-.chat-msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
-.cmsg{display:flex;gap:10px;align-items:flex-end}
+/* CHAT SCREEN */
+.chat-full{max-width:600px;width:100%;display:flex;flex-direction:column;height:calc(100vh - 110px)}
+.chat-header{background:linear-gradient(135deg,var(--primary),#6366F1);border-radius:14px 14px 0 0;padding:14px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.chat-av{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px}
+.chat-info{flex:1}
+.chat-name{color:#fff;font-size:13px;font-weight:800}
+.chat-status{color:rgba(255,255,255,.7);font-size:11px}
+.chat-online{width:7px;height:7px;border-radius:50%;background:#22C55E;border:2px solid #fff}
+.chat-back-btn{background:rgba(255,255,255,.15);border:none;border-radius:7px;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;cursor:pointer;font-family:inherit}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:#F9FAFB;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.cmsg{display:flex;gap:7px;align-items:flex-end;animation:fadeUp .2s ease}
 .cmsg.u{flex-direction:row-reverse}
-.cbubble{max-width:75%;padding:12px 14px;border-radius:18px;font-size:14px;line-height:1.5}
-.cmsg.b .cbubble{background:var(--primary-light);color:var(--text);border-bottom-left-radius:4px}
-.cmsg.u .cbubble{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
-.chat-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.chat-av.b{background:var(--primary-light)}
-.chat-av.u{background:var(--primary)}
-.tdots{display:flex;gap:4px;padding:4px 0}
-.td{width:7px;height:7px;border-radius:50%;background:var(--primary);opacity:.5;animation:td .8s infinite}
-.td:nth-child(2){animation-delay:.15s}
-.td:nth-child(3){animation-delay:.3s}
-@keyframes td{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
-.chat-inp-wrap{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--surface)}
-.chat-inp{flex:1;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;outline:none;resize:none;max-height:80px;background:var(--bg);color:var(--text);transition:border-color .2s}
+.cmsg-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.cmsg-av.b{background:linear-gradient(135deg,var(--primary),#6366F1)}
+.cmsg-av.u{background:var(--accent)}
+.cbubble{max-width:82%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.6}
+.cbubble.b{background:#fff;border:1px solid var(--border);border-bottom-left-radius:3px}
+.cbubble.u{background:var(--primary);color:#fff;border-bottom-right-radius:3px}
+.chat-inp-row{display:flex;gap:8px;padding:11px 13px;border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;background:var(--surface);flex-shrink:0}
+.chat-inp{flex:1;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;resize:none;max-height:70px;background:var(--bg)}
 .chat-inp:focus{border-color:var(--primary);background:#fff}
-.chat-send{background:var(--primary);color:#fff;border:none;border-radius:12px;width:42px;height:42px;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:opacity .2s}
-.chat-send:hover{opacity:.85}
-.chat-continue{margin:12px 16px 0;background:var(--green);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+.chat-send{background:var(--primary);border:none;border-radius:9px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.chat-send:disabled{opacity:.4;cursor:not-allowed}
+.chat-send svg{width:14px;height:14px;fill:#fff}
 
-/* UTIL */
-.page-content{flex:1;padding-bottom:32px}
-.section-title{font-size:22px;font-weight:800;margin-bottom:4px}
-.section-sub{font-size:14px;color:var(--text2);margin-bottom:24px}
-.center{text-align:center}
-.mt8{margin-top:8px}
-.mt16{margin-top:16px}
-.mt24{margin-top:24px}
-.divider{height:1px;background:var(--border);margin:16px 0}
-
-@media(max-width:480px){
-  .hero h1{font-size:22px}
-  .niche-grid{grid-template-columns:repeat(2,1fr)}
-  .form-grid{grid-template-columns:1fr}
-  .form-group.full{grid-column:1}
-  .card{padding:20px;margin:16px auto}
-  .q-text{font-size:17px}
+@media(max-width:600px){
+  .pricing-cards{grid-template-columns:1fr}
+  .price-inputs{grid-template-columns:1fr}
+  .blocks-row{grid-template-columns:1fr}
+  .niche-grid{grid-template-columns:1fr}
+  html,body{overflow:auto}
+  .screen{position:relative;min-height:calc(100vh - 100px);opacity:1!important;transform:none!important;pointer-events:all!important}
+  .screen:not(.active){display:none}
+  .chat-full{height:auto}
+  .chat-msgs{max-height:260px}
 }
 </style>
 </head>
 <body>
 
-<!-- PAGE INTRO -->
-<div class="page active" id="p-intro">
-  <div class="navbar">
-    <img src="/logo.png" height="32" alt="Societiz" style="display:block"/>
+<div class="topbar">
+  <img id="logo-img" class="logo-img" alt="Societiz"/>
+  <div class="topbar-right">
+    <button class="lang-btn active" onclick="setLang('fr')" id="lb-fr">FR</button>
+    <button class="lang-btn" onclick="setLang('ar')" id="lb-ar">AR</button>
+    <button class="lang-btn" onclick="setLang('en')" id="lb-en">EN</button>
   </div>
-  <div class="hero">
-    <div class="hero-badge">⚡ OUTIL EXCLUSIF SOCIETIZ</div>
-    <h1>Ton offre est-elle prête à générer du MRR récurrent ?</h1>
-    <p>Réponds à 12 questions et reçois ton score personnalisé + plan d'action en 3 minutes.</p>
-  </div>
-  <div class="page-content">
-    <div class="card">
-      <div style="background:#FFF7ED;border:2px solid #F59E0B;border-radius:14px;padding:16px 20px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
-        <span style="font-size:22px">⚠️</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#92400E;margin-bottom:4px">80% des communautés qui floppent ont sauté cette étape</div>
-          <div style="font-size:13px;color:#B45309;line-height:1.5">Avant de lancer, valide que ton offre est prête. Ce test t'évite des mois d'efforts perdus.</div>
-        </div>
-      </div>
-      <div style="background:linear-gradient(135deg,var(--primary),#6366F1);border-radius:14px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px">
-        <div>
-          <div style="font-size:34px;font-weight:900;color:#fff;line-height:1">$3 000</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px">MRR moyen sur Societiz</div>
-        </div>
-        <div style="font-size:13px;color:rgba(255,255,255,.85);line-height:1.6;max-width:220px">Les créateurs qui passent ce test lancent avec une offre 2× plus solide.</div>
-      </div>
-      <button class="btn-primary" onclick="showPage('p0')">Scorer mon offre →</button>
+</div>
+<div class="progress-wrap"><div class="progress-fill" id="prog"></div></div>
+
+<div class="main" id="main">
+
+<!-- INTRO -->
+<div class="screen active" id="sc-intro">
+  <div class="intro-wrap">
+    <div class="dots-row">
+      <div class="dot" style="background:#9B59B6"></div>
+      <div class="dot" style="background:#2ECC71"></div>
+      <div class="dot" style="background:#F5A623"></div>
     </div>
+    <div class="intro-badge" id="i-badge"></div>
+    <h1 class="intro-h1" id="i-h1"></h1>
+    <div class="time-pill" id="i-time"></div>
+    <p class="intro-p" id="i-desc"></p>
+    <div class="alert-box"><div class="alert-icon">⚠️</div><div class="alert-text" id="i-alert"></div></div>
+    <div class="mrr-box">
+      <div class="mrr-left">
+        <div class="mrr-num" id="i-mrr-num"></div>
+        <div class="mrr-sub" id="i-mrr-sub"></div>
+      </div>
+      <div class="mrr-right" id="i-mrr-right"></div>
+    </div>
+    <button class="start-btn" id="i-start" onclick="goScreen('lead')"></button>
   </div>
 </div>
 
-<!-- PAGE 0: LEAD FORM -->
-<div class="page" id="p0">
-  <div class="hero">
-    <div class="hero-badge">🚀 Societiz Score</div>
-    <h1>Ton offre est-elle prête à lancer une communauté ?</h1>
-    <p>Réponds à 12 questions et reçois ton score personnalisé + plan d'action en 3 minutes.</p>
-  </div>
-  <div class="page-content">
-    <div class="card">
-      <div class="section-title">Dis-nous qui tu es</div>
-      <div class="section-sub">Toutes les informations sont obligatoires</div>
-      <div class="form-grid" id="leadForm">
-        <div class="form-group">
-          <label>Prénom *</label>
-          <input type="text" id="f-prenom" placeholder="Youssef">
+<!-- LEAD CAPTURE -->
+<div class="screen" id="sc-lead">
+  <div class="intro-wrap" style="max-width:520px">
+    <div class="intro-badge" style="margin-bottom:20px">📋 Quelques infos rapides</div>
+    <h2 style="font-size:clamp(20px,3vw,28px);font-weight:900;margin-bottom:8px;line-height:1.25">Avant de commencer,<br/>dis-nous qui tu es</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6">Pour personnaliser ton score et t'envoyer tes résultats.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Prénom *</label>
+          <input class="q-input" type="text" id="lead-firstname" placeholder="Ex: Amine" style="margin:0"/>
         </div>
-        <div class="form-group">
-          <label>Nom *</label>
-          <input type="text" id="f-nom" placeholder="El Amrani">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Nom *</label>
+          <input class="q-input" type="text" id="lead-lastname" placeholder="Ex: Benali" style="margin:0"/>
         </div>
-        <div class="form-group full">
-          <label>Email *</label>
-          <input type="email" id="f-email" placeholder="youssef@gmail.com">
-        </div>
-        <div class="form-group full">
-          <label>WhatsApp * (avec indicatif)</label>
-          <input type="tel" id="f-whatsapp" placeholder="+212 6XX XXX XXX">
-        </div>
-        <div class="form-group full">
-          <label>Ton domaine d'expertise *</label>
-          <input type="text" id="f-domaine" placeholder="Coaching business, trading, fitness...">
-        </div>
-        <div class="form-group">
-          <label>Réseau social principal *</label>
-          <select id="f-reseau">
-            <option value="">Choisir...</option>
-            <option>Instagram</option>
-            <option>TikTok</option>
-            <option>YouTube</option>
-            <option>Facebook</option>
-            <option>LinkedIn</option>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Email *</label>
+        <input class="q-input" type="email" id="lead-email" placeholder="Ex: amine@gmail.com" style="margin:0"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">WhatsApp</label>
+        <input class="q-input" type="tel" id="lead-whatsapp" placeholder="Ex: +212 6 12 34 56 78" style="margin:0"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Réseau social principal</label>
+          <select class="q-input" id="lead-network" style="margin:0;cursor:pointer">
+            <option value="">Sélectionner...</option>
+            <option value="instagram">Instagram</option>
+            <option value="tiktok">TikTok</option>
+            <option value="youtube">YouTube</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="twitter">X / Twitter</option>
+            <option value="facebook">Facebook</option>
+            <option value="autre">Autre</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Nombre de followers *</label>
-          <input type="number" id="f-followers" placeholder="1500" min="0">
-        </div>
-        <div class="form-group full">
-          <label>Lien de ton profil *</label>
-          <input type="url" id="f-lien" placeholder="https://instagram.com/tonprofil">
-        </div>
-        <div class="form-group full">
-          <label>Crées-tu du contenu sur les réseaux sociaux ?</label>
-          <select id="f-contenu">
-            <option value="oui">Oui, régulièrement</option>
-            <option value="non">Pas encore</option>
-          </select>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Nombre de followers</label>
+          <input class="q-input" type="number" id="lead-followers" placeholder="Ex: 5000" min="0" style="margin:0"/>
         </div>
       </div>
-      <button class="btn-primary mt16" onclick="goToNiche()">Commencer le test →</button>
-    </div>
-  </div>
-</div>
-
-<!-- PAGE 1: NICHE -->
-<div class="page" id="p1">
-  <div class="navbar">
-    <img src="/logo.png" height="32" alt="Societiz" style="display:block"/>
-    <div style="font-size:13px;color:var(--text2)">Étape 1 / 13</div>
-  </div>
-  <div class="page-content">
-    <div class="card">
-      <div class="section-title center">Choisis ta niche</div>
-      <div class="section-sub center">Elle va personnaliser toutes tes questions</div>
-      <div class="niche-grid" id="nicheGrid"></div>
-    </div>
-  </div>
-</div>
-
-<!-- PAGE QUESTION -->
-<div class="page" id="pq">
-  <div class="navbar">
-    <img src="/logo.png" height="32" alt="Societiz" style="display:block"/>
-    <div class="progress-wrap">
-      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-      <div class="progress-label" id="progressLabel">Question 1/12</div>
-    </div>
-  </div>
-  <div class="page-content">
-    <div class="card">
-      <div class="q-header">
-        <div class="q-num" id="qNum">Question 1 / 12</div>
-        <div class="q-text" id="qText"></div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Lien de ton profil</label>
+        <input class="q-input" type="url" id="lead-profile" placeholder="Ex: https://instagram.com/tonprofil" style="margin:0"/>
       </div>
-      <div class="choices" id="qChoices"></div>
-    </div>
-  </div>
-</div>
-
-<!-- PAGE RÉSULTAT -->
-<div class="page" id="presult">
-  <div class="navbar">
-    <img src="/logo.png" height="32" alt="Societiz" style="display:block"/>
-    <div style="font-size:13px;color:var(--text2)">Résultat final</div>
-  </div>
-  <div class="page-content">
-    <div class="card center">
-      <div class="section-sub" id="resultPrenom"></div>
-      <div class="score-circle" id="scoreCircle">
-        <div class="score-inner">
-          <div class="score-num" id="scoreNum">0</div>
-          <div class="score-denom">/100</div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:10px">Crées-tu du contenu sur les réseaux sociaux ?</label>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;align-items:center;gap:10px;padding:12px 16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text2);background:var(--surface);transition:all .2s" id="lead-cc-yes-label">
+            <input type="radio" name="lead-content-creator" id="lead-cc-yes" value="yes" onchange="selectLeadContentCreator(this)" style="accent-color:var(--primary);width:16px;height:16px"/>
+            Oui, régulièrement
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:12px 16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text2);background:var(--surface);transition:all .2s" id="lead-cc-no-label">
+            <input type="radio" name="lead-content-creator" id="lead-cc-no" value="no" onchange="selectLeadContentCreator(this)" style="accent-color:var(--primary);width:16px;height:16px"/>
+            Pas encore
+          </label>
         </div>
       </div>
-      <div class="score-label" id="scoreLabel"></div>
-      <div class="divider"></div>
-      <div style="text-align:left">
-        <div style="font-size:14px;font-weight:700;margin-bottom:12px">Détail par critère</div>
-        <div class="breakdown" id="breakdownList"></div>
-      </div>
-      <div class="divider"></div>
-      <div style="text-align:left">
-        <div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ Points forts</div>
-        <div class="tag-list" id="tagFortes"></div>
-        <div style="font-size:14px;font-weight:700;margin:16px 0 8px">⚠️ À améliorer</div>
-        <div class="tag-list" id="tagAmeliorer"></div>
-      </div>
-      <div class="divider"></div>
-      <div id="ctaBox"></div>
-      <button class="btn-pdf mt16" onclick="downloadPDF()">📄 Télécharger mon rapport PDF</button>
     </div>
-    <div style="height:32px"></div>
+    <button class="start-btn" onclick="startQuizFromLead()" style="width:100%">Commencer le quiz →</button>
+    <p style="font-size:11px;color:var(--text3);margin-top:12px">🔒 Tes données sont privées et ne seront jamais partagées.</p>
   </div>
 </div>
 
-<!-- CHATBOT OVERLAY -->
-<div class="chat-overlay" id="chatOverlay">
-  <div class="chat-panel">
-    <div class="chat-top">
-      <div class="chat-title">🤖 Coach Societiz</div>
-      <button class="chat-close" onclick="closeChat()">✕</button>
-    </div>
-    <div class="chat-msgs" id="chatMsgs"></div>
-    <button class="chat-continue" id="chatContinue" onclick="continueFromChat()" style="display:none">
-      ✓ Continuer vers la question suivante
-    </button>
-    <div class="chat-inp-wrap">
-      <textarea class="chat-inp" id="chatInp" placeholder="Écris ta réponse..." rows="1" onkeydown="chatKey(event)"></textarea>
-      <button class="chat-send" onclick="sendChat()">➤</button>
+<!-- QUESTION -->
+<div class="screen" id="sc-q">
+  <div class="q-wrap">
+    <div class="q-step" id="q-step"><div class="q-step-dot"></div><span id="q-step-txt"></span></div>
+    <div class="q-title" id="q-title"></div>
+    <div class="q-hint" id="q-hint"></div>
+    <div id="q-content"></div>
+    <div id="q-reaction"></div>
+    <div id="q-assist-wrap"></div>
+    <div class="q-nav">
+      <button class="q-back" id="q-back" onclick="prevQ()"></button>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="enter-hint" id="q-enter-hint"></div>
+        <button class="q-next" id="q-next" onclick="nextQ()"></button>
+      </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- PRICING -->
+<div class="screen" id="sc-price">
+  <div class="q-wrap">
+    <div class="q-step"><div class="q-step-dot"></div><span id="price-step-txt"></span></div>
+    <div class="q-title" id="price-title"></div>
+    <div class="q-hint" id="price-hint"></div>
+    <div class="pricing-cards" id="pricing-cards"></div>
+    <div class="price-inputs">
+      <div class="price-input-wrap">
+        <div class="price-input-label" id="price-monthly-label"></div>
+        <div class="price-input-row"><span>$</span><input class="price-inp" type="number" id="price-monthly" min="1" placeholder="49" oninput="updatePriceTip()"/></div>
+      </div>
+      <div class="price-input-wrap">
+        <div class="price-input-label" id="price-yearly-label"></div>
+        <div class="price-input-row"><span>$</span><input class="price-inp" type="number" id="price-yearly" min="1" placeholder="470" oninput="updatePriceTip()"/></div>
+      </div>
+    </div>
+    <div class="price-tip" id="price-tip"></div>
+    <div class="q-nav" style="margin-top:16px">
+      <button class="q-back" onclick="goScreen('q'); qIndex=questions.length-1; renderQ()"></button>
+      <button class="q-next" onclick="nextPrice()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- NICHE -->
+<div class="screen" id="sc-niche">
+  <div class="q-wrap">
+    <div class="q-step"><div class="q-step-dot"></div><span id="niche-step-txt"></span></div>
+    <div class="q-title" id="niche-title"></div>
+    <div class="q-hint" id="niche-hint"></div>
+    <div class="niche-grid" id="niche-grid"></div>
+    <div id="niche-reaction" style="margin-top:12px"></div>
+    <div class="q-nav" style="margin-top:16px">
+      <button class="q-back" onclick="goScreen('price')"></button>
+      <button class="q-next" id="niche-next" onclick="nextNiche()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULA -->
+<div class="screen" id="sc-formula">
+  <div class="formula-wrap">
+    <div class="q-step"><div class="q-step-dot"></div><span id="f-step-txt"></span></div>
+    <div class="q-title" id="f-title"></div>
+    <div class="q-hint" id="f-hint"></div>
+    <div class="formula-box">
+      <div class="formula-label" id="f-label"></div>
+      <div class="formula-text" id="f-text"></div>
+    </div>
+    <div class="q-nav">
+      <button class="q-back" onclick="goScreen('niche')"></button>
+      <button class="q-next" onclick="goResult()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="sc-result" style="overflow-y:auto;padding:28px 24px 40px">
+  <div class="result-wrap">
+    <div class="score-ring" id="score-ring"><div class="score-inner"><div class="score-big" id="score-big">0</div><div class="score-sub">/100</div></div></div>
+    <div class="res-title" id="res-title"></div>
+    <div class="res-sub" id="res-sub"></div>
+    <div class="blocks-row" id="blocks-row"></div>
+    <div class="recos" id="recos"></div>
+    <div class="cta-box" id="cta-box"></div>
+    <div style="text-align:center;margin-top:10px"><button class="open-chat-link" id="open-chat-link" onclick="openChat()"></button></div>
+    <div style="text-align:center;margin-top:12px"><button onclick="generatePDF()" style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text2);transition:all .2s" onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">📄 Télécharger mon rapport PDF</button></div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="screen" id="sc-chat" style="padding:16px 24px">
+  <div class="chat-full">
+    <div class="chat-header">
+      <div class="chat-av">🤖</div>
+      <div class="chat-info"><div class="chat-name" id="chat-name"></div><div class="chat-status" id="chat-status"></div></div>
+      <div class="chat-online"></div>
+      <button class="chat-back-btn" id="chat-back-btn" onclick="goScreen('result')"></button>
+    </div>
+    <div class="chat-msgs" id="chat-msgs"></div>
+    <div class="chat-inp-row">
+      <textarea class="chat-inp" id="chat-inp" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMainChat()}"></textarea>
+      <button class="chat-send" id="chat-send" onclick="sendMainChat()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg></button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ASSIST OVERLAY -->
+<div class="assist-overlay" id="assist-overlay" onclick="if(event.target===this)closeAssist()">
+  <div class="assist-panel">
+    <div class="assist-header">
+      <div class="assist-title" id="assist-title"></div>
+      <button class="assist-close" onclick="closeAssist()">✕</button>
+    </div>
+    <div class="assist-msgs" id="assist-msgs"></div>
+    <div class="assist-inp-row">
+      <input class="assist-inp" id="assist-inp" onkeydown="if(event.key==='Enter')sendAssist()" placeholder="..."/>
+      <button class="assist-send" id="assist-send" onclick="sendAssist()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg></button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ─── DATA ───────────────────────────────────────────────────────────────────
+// ── LOGO
+document.getElementById('logo-img').src='data:image/png;base64,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';
 
-const NICHES = [
-  {id:'biz',   label:'Business & Entrepreneuriat', emoji:'💼'},
-  {id:'immo',  label:'Immobilier & Investissement', emoji:'🏠'},
-  {id:'finance',label:'Finance & Trading',          emoji:'📈'},
-  {id:'fitness',label:'Fitness & Santé',            emoji:'💪'},
-  {id:'beaute', label:'Beauté & Lifestyle',         emoji:'💄'},
-  {id:'formation',label:'Formation & Compétences',  emoji:'📚'},
-  {id:'tech',  label:'Tech & Digital',              emoji:'💻'},
-  {id:'emploi',label:'Emploi & Carrière',           emoji:'🎯'},
-  {id:'famille',label:'Parentalité & Famille',      emoji:'👨‍👩‍👧'},
-  {id:'autre', label:'Autre',                       emoji:'✨'},
-];
+// ── I18N
+const T={
+fr:{
+  badge:'✦ Outil exclusif Societiz',
+  h1:'Ton offre est-elle prête à<br/><span>générer du MRR récurrent ?</span>',
+  time:'⏱️ 5 minutes · Peut t\'économiser des mois voire des années de travail mal fait',
+  desc:'Après 2 ans de testing avec des centaines de communautés marocaines, on a identifié la raison #1 des échecs.',
+  alert:'<strong>80% des communautés qui floppent</strong> ont sauté cette étape. Ce n\'est pas le budget, ni la plateforme — c\'est l\'offre.',
+  mrr_num:'$3 000',mrr_sub:'MRR moyen sur Societiz',
+  mrr_right:'Les créateurs à +$10 000/mois ont tous respecté ce framework. Aucune exception.',
+  start:'Scorer mon offre →',
+  next:'Continuer →',back:'← Retour',calc:'Voir mon score →',
+  enter:'Appuie sur Entrée ↵',
+  assist:'💡 Aide-moi à répondre',
+  assist_title:'Assistant — Exemples concrets',
+  chat_name:'Coach Societiz — Pas ChatGPT',chat_status:'2 ans de testing · centaines de communautés marocaines',chat_back:'← Résultat',
+  open_chat:'💬 Parler au Coach IA pour améliorer mon offre',
+  price_title:'Quel sera le prix de ta communauté ?',
+  price_hint:'Choisis ton modèle d\'offre, puis entre tes prix.',
+  price_monthly:'Prix mensuel',price_yearly:'Prix annuel',
+  niche_title:'Dans quelle niche es-tu ?',
+  niche_hint:'Cela nous aide à évaluer le potentiel de ton marché.',
+  f_title:'Construis ta formule d\'offre',
+  f_hint:'La phrase que tu diras à ton audience. Plus c\'est précis, plus ça convertit.',
+  f_label:'FORMULE DE TON OFFRE',
+  res_great:'🚀 Offre solide — Tu es prêt(e) !',
+  res_mid:'⚠️ Bonnes bases — Quelques ajustements',
+  res_bad:'🔧 Offre à retravailler avant de lancer',
+  res_great_sub:'Ton offre a le potentiel de générer du MRR récurrent. Lance-toi sur Societiz.',
+  res_mid_sub:'Tu as de bonnes bases. Quelques ajustements peuvent doubler ton MRR.',
+  res_bad_sub:'Ne lance pas maintenant — travaille l\'offre d\'abord. Chaque mois perdu = MRR en moins.',
+  b1:'Crédibilité',b2:'Précision ICP',b3:'Force offre',
+  cta_great_t:'Lance ta communauté sur Societiz',
+  cta_great_d:'Rejoins les créateurs qui génèrent en moyenne $3 000/mois.',
+  cta_great_b:'Créer ma communauté →',
+  cta_mid_t:'Améliore ton offre avec le Coach IA',
+  cta_mid_d:'Notre Coach IA affine les points faibles pour maximiser ton MRR.',
+  cta_mid_b:'Parler au Coach →',
+  cta_bad_t:'Construit une offre qui convertit',
+  cta_bad_d:'Les créateurs à +$10K ont tous commencé par cette étape.',
+  cta_bad_b:'Construire mon offre →',
+  step_of:'sur',
+  not_gpt:'🧠 Pas ChatGPT — notre savoir-faire encodé',
+  coach_label:'Coach Societiz',
+  coach_sub:'2 ans · centaines de communautés marocaines',
+},
+ar:{
+  badge:'✦ أداة حصرية من Societiz',
+  h1:'هل عرضك جاهز<br/><span>لتوليد دخل شهري متكرر؟</span>',
+  time:'⏱️ 5 دقائق · يمكن أن توفر لك أشهراً بل سنوات من العمل الخاطئ',
+  desc:'بعد سنتين من الاختبار مع مئات المجتمعات المغربية، حددنا السبب الرئيسي #1 للإخفاقات.',
+  alert:'<strong>80% من المجتمعات التي فشلت</strong> تجاوزت هذه الخطوة. ليس الميزانية، ليس المنصة — العرض.',
+  mrr_num:'$3,000',mrr_sub:'متوسط MRR على Societiz',
+  mrr_right:'المنشئون الذين يجنون أكثر من $10,000/شهر احترموا هذا الإطار بالضبط. لا استثناءات.',
+  start:'قيّم عرضي ←',
+  next:'متابعة ←',back:'رجوع →',calc:'عرض نتيجتي ←',
+  enter:'اضغط Enter ↵',
+  assist:'💡 ساعدني في الإجابة',
+  assist_title:'المساعد — أمثلة ملموسة',
+  chat_name:'مدرب Societiz — ليس ChatGPT',chat_status:'سنتان من الاختبار · مئات المجتمعات المغربية',chat_back:'النتيجة →',
+  open_chat:'💬 تحدث مع المدرب الذكي لتحسين عرضك',
+  price_title:'ما سيكون سعر مجتمعك؟',
+  price_hint:'اختر نموذج عرضك ثم أدخل أسعارك.',
+  price_monthly:'السعر الشهري',price_yearly:'السعر السنوي',
+  niche_title:'في أي مجال تعمل؟',
+  niche_hint:'هذا يساعدنا في تقييم إمكانية سوقك.',
+  f_title:'ابنِ صيغة عرضك',
+  f_hint:'الجملة التي ستقولها لجمهورك. كلما كانت أدق، كلما ارتفع معدل التحويل.',
+  f_label:'صيغة عرضك',
+  res_great:'🚀 عرض قوي — أنت جاهز!',
+  res_mid:'⚠️ أسس جيدة — بعض التعديلات',
+  res_bad:'🔧 العرض يحتاج إعادة هيكلة قبل الإطلاق',
+  res_great_sub:'عرضك لديه إمكانية توليد دخل شهري متكرر. انطلق على Societiz.',
+  res_mid_sub:'لديك أسس جيدة. بعض التعديلات يمكن أن تضاعف دخلك الشهري.',
+  res_bad_sub:'لا تطلق الآن — اعمل على العرض أولاً. كل شهر تضيعه = دخل أقل.',
+  b1:'المصداقية',b2:'دقة العميل',b3:'قوة العرض',
+  cta_great_t:'أطلق مجتمعك على Societiz',
+  cta_great_d:'انضم للمنشئين الذين يحققون في المتوسط $3,000/شهر.',
+  cta_great_b:'إنشاء مجتمعي ←',
+  cta_mid_t:'حسّن عرضك مع المدرب الذكي',
+  cta_mid_d:'مدرب الذكاء الاصطناعي يساعدك على تحسين النقاط الضعيفة.',
+  cta_mid_b:'تحدث مع المدرب ←',
+  cta_bad_t:'ابنِ عرضاً يحوّل',
+  cta_bad_d:'المنشئون الكبار بدأوا من هذه الخطوة.',
+  cta_bad_b:'بناء عرضي ←',
+  step_of:'من',
+  not_gpt:'🧠 ليس ChatGPT — خبرتنا المُرمَّزة',
+  coach_label:'مدرب Societiz',
+  coach_sub:'سنتان · مئات المجتمعات المغربية',
+},
+en:{
+  badge:'✦ Exclusive Societiz Tool',
+  h1:'Is your offer ready to<br/><span>generate recurring MRR?</span>',
+  time:'⏱️ 5 minutes · Can save you months or even years of wasted effort',
+  desc:'After 2 years of testing with hundreds of Moroccan communities, we identified the #1 reason for failures.',
+  alert:'<strong>80% of communities that flopped</strong> skipped this step. Not budget, not platform — the offer.',
+  mrr_num:'$3,000',mrr_sub:'Average MRR on Societiz',
+  mrr_right:'Creators generating +$10,000/month all followed this framework exactly. No exceptions.',
+  start:'Score my offer →',
+  next:'Continue →',back:'← Back',calc:'See my score →',
+  enter:'Press Enter ↵',
+  assist:'💡 Help me answer',
+  assist_title:'Assistant — Concrete examples',
+  chat_name:'Societiz Coach — Not ChatGPT',chat_status:'2 years testing · hundreds of Moroccan communities',chat_back:'← Result',
+  open_chat:'💬 Talk to AI Coach to improve my offer',
+  price_title:'What will your community price be?',
+  price_hint:'Choose your offer model, then enter your prices.',
+  price_monthly:'Monthly price',price_yearly:'Annual price',
+  niche_title:'What niche are you in?',
+  niche_hint:'This helps us evaluate your market potential.',
+  f_title:'Build your offer formula',
+  f_hint:'The sentence you\'ll say to your audience. The more precise, the higher it converts.',
+  f_label:'YOUR OFFER FORMULA',
+  res_great:'🚀 Solid offer — You\'re ready!',
+  res_mid:'⚠️ Good foundations — A few adjustments',
+  res_bad:'🔧 Offer needs reworking before launch',
+  res_great_sub:'Your offer has potential to generate recurring MRR. Launch on Societiz.',
+  res_mid_sub:'You have good foundations. A few tweaks can double your MRR.',
+  res_bad_sub:'Don\'t launch now — work on the offer first. Every month lost = less MRR.',
+  b1:'Credibility',b2:'ICP Precision',b3:'Offer Strength',
+  cta_great_t:'Launch your community on Societiz',
+  cta_great_d:'Join creators averaging $3,000/month in recurring MRR.',
+  cta_great_b:'Create my community →',
+  cta_mid_t:'Improve your offer with AI Coach',
+  cta_mid_d:'Our AI Coach refines weak points to maximize your MRR.',
+  cta_mid_b:'Talk to Coach →',
+  cta_bad_t:'Build an offer that converts',
+  cta_bad_d:'+$10K creators all started with this step.',
+  cta_bad_b:'Build my offer →',
+  step_of:'of',
+  not_gpt:'🧠 Not ChatGPT — our encoded expertise',
+  coach_label:'Societiz Coach',
+  coach_sub:'2 years · hundreds of Moroccan communities',
+}};
 
-const Q = [
-  {
-    id:'transformation', max:20,
-    text:'Quelle transformation concrète tu offres à tes clients ?',
-    choices:{
-      biz:[
-        {t:'Lancer et rentabiliser un business en ligne de 0 à 50 000 DH/mois',p:20},
-        {t:'Créer une offre de service premium et décrocher 5 clients récurrents',p:15},
-        {t:'Développer une marque personnelle et vendre son expertise en ligne',p:10},
-        {t:'Passer de salarié à entrepreneur en moins de 6 mois',p:5},
-      ],
-      immo:[
-        {t:'Acheter son premier bien locatif et générer un revenu passif dès le 1er mois',p:20},
-        {t:'Construire un portefeuille de 3+ biens en 2 ans depuis zéro',p:15},
-        {t:'Générer 5 000–15 000 DH/mois de revenus locatifs nets',p:10},
-        {t:'Flipper un bien et réaliser une plus-value nette en 6 mois',p:5},
-      ],
-      finance:[
-        {t:'Atteindre un taux de trades gagnants supérieur à 65% de façon constante',p:20},
-        {t:'Construire un portefeuille qui génère 3 000–10 000 DH/mois de revenus passifs',p:15},
-        {t:'Maîtriser l\'analyse technique et ne plus perdre d\'argent par émotion',p:10},
-        {t:'Comprendre les marchés financiers et faire ses premiers investissements en sécurité',p:5},
-      ],
-      fitness:[
-        {t:'Perdre 10 à 20 kg durablement sans régime restrictif ni effet yoyo',p:20},
-        {t:'Prendre de la masse musculaire proprement et visiblement en 4 mois',p:15},
-        {t:'Retrouver une énergie et une forme physique optimales après 35 ans',p:10},
-        {t:'Adopter un mode de vie sain adapté au rythme et à la cuisine marocaine',p:5},
-      ],
-      beaute:[
-        {t:'Créer et lancer sa propre ligne de cosmétiques naturels rentable',p:20},
-        {t:'Développer une clientèle fidèle et récurrente en tant que coach beauté',p:15},
-        {t:'Maîtriser les techniques de maquillage pro et monétiser son talent',p:10},
-        {t:'Créer du contenu lifestyle qui convertit en ventes directes',p:5},
-      ],
-      formation:[
-        {t:'Créer et vendre une formation en ligne qui génère des revenus récurrents',p:20},
-        {t:'Construire un programme de coaching individuel qui délivre des résultats mesurables',p:15},
-        {t:'Monétiser son expertise via des ateliers, masterclasses et formations collectives',p:10},
-        {t:'Devenir formateur reconnu et certifié dans sa filière',p:5},
-      ],
-      tech:[
-        {t:'Devenir développeur freelance et facturer 8 000–20 000 DH/projet',p:20},
-        {t:'Lancer un SaaS ou produit digital rentable dès les 90 premiers jours',p:15},
-        {t:'Automatiser son business avec l\'IA et gagner 10h/semaine minimum',p:10},
-        {t:'Maîtriser le no-code et créer des applications sans programmer',p:5},
-      ],
-      emploi:[
-        {t:'Décrocher un poste dans une multinationale ou une entreprise internationale',p:20},
-        {t:'Négocier une augmentation de 30%+ ou obtenir une promotion rapidement',p:15},
-        {t:'Réorienter sa carrière vers un secteur porteur et bien rémunéré',p:10},
-        {t:'Décrocher son premier emploi après les études malgré la compétition',p:5},
-      ],
-      famille:[
-        {t:'Établir une discipline bienveillante et des règles claires sans crier',p:20},
-        {t:'Créer un équilibre réel entre ambition professionnelle et vie familiale épanouie',p:15},
-        {t:'Développer une communication ouverte et de confiance avec ses enfants',p:10},
-        {t:'Traverser une transition familiale (divorce, déménagement, nouveau bébé) sereinement',p:5},
-      ],
-      autre:[
-        {t:'Transformer une passion ou compétence spécifique en source de revenus réguliers',p:20},
-        {t:'Aider les gens à résoudre un problème précis que j\'ai moi-même vécu et résolu',p:15},
-        {t:'Créer une communauté soudée autour d\'une valeur ou d\'un intérêt commun',p:10},
-        {t:'Développer une expertise reconnue et générer de l\'autorité dans mon domaine',p:5},
-      ],
-    }
-  },
-  {
-    id:'self', max:15,
-    text:'As-tu toi-même réalisé cette transformation ?',
-    choices:{
-      _all:[
-        {t:'Oui complètement — je suis ma propre preuve vivante avec des résultats documentés',p:15},
-        {t:'Partiellement — j\'ai bien progressé mais pas encore au niveau maximum',p:10},
-        {t:'Je suis en cours de transformation en parallèle avec mes clients',p:5},
-        {t:'Je m\'appuie sur mes connaissances théoriques et l\'expérience des autres',p:2},
-      ]
-    }
-  },
-  {
-    id:'helped', max:10,
-    text:'As-tu déjà aidé d\'autres personnes à obtenir ce résultat ?',
-    choices:{
-      _all:[
-        {t:'Oui, plus de 10 personnes ont obtenu des résultats concrets et mesurables',p:10},
-        {t:'Oui, entre 3 et 10 personnes ont progressé grâce à mon aide',p:7},
-        {t:'Oui, 1 à 2 personnes à titre gratuit ou amical',p:4},
-        {t:'Pas encore, mais j\'ai les compétences et le plan pour le faire',p:0},
-      ]
-    }
-  },
-  {
-    id:'paid', max:5,
-    text:'Ces personnes ont-elles payé pour ton aide ?',
-    choices:{
-      _all:[
-        {t:'Oui, plusieurs clients ont payé un prix commercial pour mes services',p:5},
-        {t:'Oui, une ou deux fois à un tarif test ou réduit',p:3},
-        {t:'Uniquement en barter, échange de services ou témoignage',p:2},
-        {t:'Non, je n\'ai jamais encaissé d\'argent pour ça',p:0},
-      ]
-    }
-  },
-  {
-    id:'icp', max:10,
-    text:'Qui est exactement ton client idéal ?',
-    choices:{
-      biz:[
-        {t:'Salarié 25-40 ans qui veut quitter son CDI et lancer son business en ligne',p:10},
-        {t:'Freelance en galère qui veut systématiser son acquisition client et stabiliser ses revenus',p:8},
-        {t:'Créateur de contenu marocain qui veut monétiser son audience avec une offre premium',p:5},
-        {t:'Gérant de petite boutique ou PME qui veut développer sa présence digitale',p:3},
-      ],
-      immo:[
-        {t:'Salarié 30-45 ans avec une capacité d\'emprunt qui veut investir dans la pierre au Maroc',p:10},
-        {t:'Expatrié marocain (Europe/Golfe) qui veut investir à distance et sécuriser son avenir',p:8},
-        {t:'Investisseur déjà propriétaire qui veut optimiser ses rendements et passer à l\'échelle',p:5},
-        {t:'Jeune couple cherchant à acheter intelligemment leur premier appartement',p:3},
-      ],
-      finance:[
-        {t:'Salarié 28-45 ans avec épargne dormante qui veut faire fructifier son argent intelligemment',p:10},
-        {t:'Entrepreneur qui veut diversifier ses revenus et protéger son patrimoine',p:8},
-        {t:'Jeune actif 20-30 ans qui veut apprendre à investir tôt et créer des habitudes gagnantes',p:5},
-        {t:'Proche retraite cherchant des revenus passifs sécurisés et sans risque excessif',p:3},
-      ],
-      fitness:[
-        {t:'Homme/femme 30-50 ans en surpoids, sédentaire, qui a essayé plusieurs régimes sans succès',p:10},
-        {t:'Maman post-accouchement voulant retrouver sa forme sans culpabilité et sans se priver',p:8},
-        {t:'Sportif amateur qui s\'entraîne depuis 1 an mais stagne et ne voit plus de résultats',p:5},
-        {t:'Jeune 20-30 ans voulant prendre de la masse proprement et améliorer son physique',p:3},
-      ],
-      beaute:[
-        {t:'Femme 25-40 ans passionnée de beauté qui veut monétiser son expertise et en vivre',p:10},
-        {t:'Esthéticienne ou maquilleuse qui veut développer sa clientèle en ligne',p:8},
-        {t:'Influenceuse naissante cherchant à collaborer avec des marques et créer ses propres produits',p:5},
-        {t:'Cliente régulière qui veut apprendre à se maquiller ou prendre soin d\'elle à domicile',p:3},
-      ],
-      formation:[
-        {t:'Expert métier (consultant, comptable, juriste, RH) qui veut digitaliser et scalersa transmission',p:10},
-        {t:'Enseignant ou formateur traditionnel qui veut passer au e-learning et atteindre plus de monde',p:8},
-        {t:'Coach ou thérapeute qui veut structurer son accompagnement en programme vendable',p:5},
-        {t:'Professionnel expérimenté 35-55 ans qui veut transmettre son savoir avant de changer de cap',p:3},
-      ],
-      tech:[
-        {t:'Développeur junior 22-30 ans qui veut décrocher ses premiers clients freelance et multiplier ses revenus',p:10},
-        {t:'Entrepreneur non-tech qui veut automatiser ses process avec l\'IA sans coder',p:8},
-        {t:'Salarié IT qui veut monter en compétences et augmenter significativement son salaire',p:5},
-        {t:'Étudiant en informatique qui veut se différencier sur le marché avec des projets concrets',p:3},
-      ],
-      emploi:[
-        {t:'Diplômé Bac+3/5 cherchant son premier CDI dans une grande entreprise ou multinationale',p:10},
-        {t:'Cadre 35-45 ans qui stagne et veut une promotion ou un meilleur poste ailleurs',p:8},
-        {t:'Personne en reconversion professionnelle vers un secteur plus porteur et mieux rémunéré',p:5},
-        {t:'Demandeur d\'emploi longue durée qui a perdu confiance et cherche à relancer sa carrière',p:3},
-      ],
-      famille:[
-        {t:'Parent de 28-45 ans débordé et stressé qui cherche un équilibre travail-famille concret',p:10},
-        {t:'Maman isolée ou en difficulté qui veut des outils pratiques pour éduquer sereinement',p:8},
-        {t:'Couple avec des enfants qui traverse des tensions et veut améliorer la communication familiale',p:5},
-        {t:'Nouveau parent angoissé qui veut bien faire dès le départ sans se perdre dans les conseils contradictoires',p:3},
-      ],
-      autre:[
-        {t:'Passionné qui a résolu un problème précis et veut aider d\'autres à faire pareil plus vite',p:10},
-        {t:'Professionnel indépendant qui veut trouver son positionnement unique et attirer les bons clients',p:8},
-        {t:'Personne avec une communauté locale ou associative qui veut la structurer et la monétiser',p:5},
-        {t:'Toute personne motivée par un défi ou une transformation spécifique que j\'ai traversée',p:3},
-      ],
-    }
-  },
-  {
-    id:'fear', max:10,
-    text:'Quelle est la peur principale de ton client idéal ?',
-    choices:{
-      biz:[
-        {t:'Perdre son emploi stable ou ses économies en se lançant dans l\'entrepreneuriat',p:10},
-        {t:'Ne jamais trouver de clients et être obligé de baisser ses prix pour survivre',p:8},
-        {t:'Être jugé ou moqué par sa famille et ses amis s\'il échoue',p:5},
-        {t:'Rester seul sans réseau ni mentor face à la complexité du business',p:3},
-      ],
-      immo:[
-        {t:'Acheter au mauvais prix et se retrouver bloqué avec un bien invendable ou non-locatif',p:10},
-        {t:'Être victime d\'une arnaque ou d\'un promoteur malhonnête comme tant d\'autres',p:8},
-        {t:'Ne pas comprendre les démarches juridiques et administratives marocaines complexes',p:5},
-        {t:'Manquer de liquidités et ne pas pouvoir rembourser le crédit immobilier',p:3},
-      ],
-      finance:[
-        {t:'Perdre toutes ses économies sur un mauvais trade ou investissement impulsif',p:10},
-        {t:'Être manipulé par des gourous ou des scams qui promettent des rendements miraculeux',p:8},
-        {t:'Ne jamais comprendre les marchés et rester esclave d\'un salaire insuffisant',p:5},
-        {t:'Devoir rendre des comptes à sa famille après avoir perdu de l\'argent',p:3},
-      ],
-      fitness:[
-        {t:'Faire des efforts pendant des mois et ne voir aucun résultat visible',p:10},
-        {t:'Se blesser et devoir tout arrêter à cause d\'un programme inadapté',p:8},
-        {t:'Reprendre les mauvaises habitudes après quelques semaines de motivation',p:5},
-        {t:'Être jugé ou moqué à la salle de sport à cause de son niveau débutant',p:3},
-      ],
-      beaute:[
-        {t:'Investir dans des produits ou formations et ne pas récupérer son argent',p:10},
-        {t:'Ne pas être prise au sérieux comme professionnelle face aux grandes marques',p:8},
-        {t:'Endommager la peau d\'une cliente et ruiner sa réputation',p:5},
-        {t:'Être noyée dans la concurrence d\'Instagram sans jamais se démarquer',p:3},
-      ],
-      formation:[
-        {t:'Créer une formation complète que personne n\'achète après des mois de travail',p:10},
-        {t:'Être jugé incompétent ou illégitime par les apprenants ou ses pairs',p:8},
-        {t:'Se faire copier son contenu et voir son travail piraté sans recours',p:5},
-        {t:'Ne pas maîtriser la technique (vidéo, plateforme, tunnel de vente) et se bloquer',p:3},
-      ],
-      tech:[
-        {t:'Travailler énormément sans jamais être payé à sa juste valeur',p:10},
-        {t:'Être remplacé par l\'IA ou des devs moins chers dans les prochaines années',p:8},
-        {t:'Ne pas trouver de clients réguliers et vivre dans l\'incertitude financière permanente',p:5},
-        {t:'Ne pas suivre le rythme des nouvelles technologies et devenir obsolète',p:3},
-      ],
-      emploi:[
-        {t:'Envoyer des centaines de CVs sans jamais recevoir de réponse sérieuse',p:10},
-        {t:'Passer des entretiens prometteurs et se faire recaler à la dernière étape',p:8},
-        {t:'Accepter un emploi qui ne correspond pas à ses valeurs par peur du chômage',p:5},
-        {t:'Être surqualifié pour certains postes et perçu comme trop cher pour d\'autres',p:3},
-      ],
-      famille:[
-        {t:'Faire des erreurs irréparables dans l\'éducation de ses enfants sans s\'en rendre compte',p:10},
-        {t:'Transmettre inconsciemment ses propres traumatismes d\'enfance à ses enfants',p:8},
-        {t:'Manquer du temps de qualité avec sa famille à cause du travail et de la fatigue',p:5},
-        {t:'Perdre l\'autorité naturelle et le respect de ses enfants en voulant être trop cool',p:3},
-      ],
-      autre:[
-        {t:'Investir du temps et de l\'argent et obtenir zéro résultat concret au bout du compte',p:10},
-        {t:'Ne pas être légitime ou crédible aux yeux de sa cible et ne jamais être pris au sérieux',p:8},
-        {t:'Se faire dépasser par quelqu\'un avec moins d\'expérience qui a mieux marketé',p:5},
-        {t:'Rester seul sans soutien ni communauté dans une démarche qui demande du courage',p:3},
-      ],
-    }
-  },
-  {
-    id:'dream', max:10,
-    text:'Quel est le rêve ultime de ton client — ce qu\'il veut vraiment dans 2 ans ?',
-    choices:{
-      biz:[
-        {t:'Vivre de son business depuis n\'importe où et ne plus dépendre d\'un patron',p:10},
-        {t:'Atteindre 100 000 DH/mois et offrir une belle vie à sa famille',p:8},
-        {t:'Être reconnu comme l\'expert référence de sa niche au Maroc et en Afrique',p:5},
-        {t:'Créer plusieurs sources de revenus passifs et ne plus échanger son temps contre de l\'argent',p:3},
-      ],
-      immo:[
-        {t:'Posséder 5+ appartements dont les loyers couvrent toutes ses dépenses de vie',p:10},
-        {t:'Quitter son emploi grâce aux revenus locatifs passifs et être vraiment libre',p:8},
-        {t:'Devenir le promoteur ou l\'agent immobilier reconnu de sa région',p:5},
-        {t:'Laisser un patrimoine immobilier solide à ses enfants',p:3},
-      ],
-      finance:[
-        {t:'Atteindre l\'indépendance financière complète avant 45 ans',p:10},
-        {t:'Voir son portefeuille générer 10 000 DH/mois de façon autonome sans y toucher',p:8},
-        {t:'Être totalement libre de ses choix de vie sans contrainte financière',p:5},
-        {t:'Partir à la retraite anticipée ou voyager en vivant de ses investissements',p:3},
-      ],
-      fitness:[
-        {t:'Avoir le physique de ses rêves et se sentir fier en toute situation',p:10},
-        {t:'Ne plus jamais avoir honte de son corps et regagner toute sa confiance en soi',p:8},
-        {t:'Avoir une énergie illimitée, ne plus être fatigué et vivre pleinement',p:5},
-        {t:'Inspirer ses proches et sa famille à adopter un mode de vie plus sain',p:3},
-      ],
-      beaute:[
-        {t:'Avoir son propre institute ou salon qui tourne sans elle avec une équipe dédiée',p:10},
-        {t:'Lancer sa propre ligne de cosmétiques et la vendre dans tout le Maroc',p:8},
-        {t:'Être l\'influenceuse beauté marocaine de référence avec 100 000+ abonnés engagés',p:5},
-        {t:'Vivre de sa passion sans jamais avoir l\'impression de travailler',p:3},
-      ],
-      formation:[
-        {t:'Voir ses apprenants transformer leur vie et lui envoyer des témoignages émouvants',p:10},
-        {t:'Avoir une académie en ligne qui génère des revenus automatiques pendant son sommeil',p:8},
-        {t:'Être reconnu comme formateur de référence dans son domaine au Maroc et au-delà',p:5},
-        {t:'Former la prochaine génération d\'experts de sa filière',p:3},
-      ],
-      tech:[
-        {t:'Facturer 30 000+ DH/mois en freelance tech depuis chez lui ou depuis l\'étranger',p:10},
-        {t:'Lancer un produit digital qui lui rapporte des revenus récurrents sans effort constant',p:8},
-        {t:'Créer sa startup tech et lancer un produit utilisé dans tout le Maghreb',p:5},
-        {t:'Être le développeur marocain reconnu dans sa spécialité à l\'échelle internationale',p:3},
-      ],
-      emploi:[
-        {t:'Avoir un poste à responsabilités dans une entreprise internationale avec un beau salaire',p:10},
-        {t:'Diriger sa propre équipe et être reconnu comme leader dans son organisation',p:8},
-        {t:'Travailler dans un domaine qui le passionne tout en gagnant très bien sa vie',p:5},
-        {t:'Avoir une carrière internationale, voyager et travailler depuis différents pays',p:3},
-      ],
-      famille:[
-        {t:'Avoir une famille soudée, des enfants épanouis et une relation de confiance totale',p:10},
-        {t:'Trouver l\'équilibre parfait entre ambition professionnelle et bonheur familial',p:8},
-        {t:'Voir ses enfants réussir leur vie et savoir qu\'il y a contribué directement',p:5},
-        {t:'Créer des rituels et des souvenirs familiaux inoubliables qui durent toute une vie',p:3},
-      ],
-      autre:[
-        {t:'Vivre de sa passion et ne plus jamais compter les jours jusqu\'au week-end',p:10},
-        {t:'Créer un impact réel et être remercié sincèrement par les personnes qu\'il a aidées',p:8},
-        {t:'Avoir une communauté fidèle et soudée autour de ce qu\'il fait',p:5},
-        {t:'Être reconnu comme expert dans son domaine sans avoir à chercher des clients',p:3},
-      ],
-    }
-  },
-  {
-    id:'guarantee', max:5,
-    text:'As-tu une garantie sur les résultats de ton offre ?',
-    choices:{
-      _all:[
-        {t:'Oui — garantie remboursement 30 jours si les conditions sont suivies et pas de résultat',p:5},
-        {t:'Oui — je m\'engage à accompagner jusqu\'à ce que l\'objectif soit atteint',p:4},
-        {t:'Garantie partielle — remboursement sous certaines conditions précises',p:2},
-        {t:'Non, pas encore de garantie formalisée',p:0},
-      ]
-    }
-  },
-  {
-    id:'testimonials', max:5,
-    text:'As-tu des témoignages de clients ou personnes aidées ?',
-    choices:{
-      _all:[
-        {t:'Oui, j\'ai 5+ témoignages vidéo ou écrits avec des résultats chiffrés et vérifiables',p:5},
-        {t:'Oui, 2 à 4 témoignages de personnes satisfaites avec des preuves',p:4},
-        {t:'Quelques retours positifs informels mais rien de formalisé ni documenté',p:2},
-        {t:'Pas encore de témoignages',p:0},
-      ]
-    }
-  },
-  {
-    id:'social', max:5,
-    text:'Quelle est ta présence sur les réseaux sociaux aujourd\'hui ?',
-    choices:{
-      _all:[
-        {t:'J\'ai plus de 5 000 abonnés engagés avec un taux d\'engagement supérieur à 4%',p:5},
-        {t:'J\'ai entre 1 000 et 5 000 abonnés avec un engagement correct',p:4},
-        {t:'J\'ai moins de 1 000 abonnés mais je poste régulièrement et j\'avance',p:2},
-        {t:'Je n\'ai pas encore de présence sérieuse sur les réseaux',p:0},
-      ]
-    }
-  },
-  {
-    id:'pricing', max:3,
-    text:'Quel modèle de prix envisages-tu pour ton offre ?',
-    choices:{
-      _all:[
-        {t:'Do It Yourself — Abonnement mensuel, contenu exclusif, membres autonomes',p:3},
-        {t:'Do It With You — Coaching groupe, sessions live, semi-personnalisé',p:2},
-        {t:'Do It For You — Accompagnement personnalisé complet',p:1},
-        {t:'Autre — le coach m\'aide à répondre',p:0},
-      ]
-    }
-  },
-  {
-    id:'channel', max:2,
-    text:'Quel est ton canal principal pour trouver et convaincre tes clients ?',
-    choices:{
-      _all:[
-        {t:'Réseaux sociaux organiques — je crée du contenu qui attire mes clients naturellement',p:2},
-        {t:'Publicité payante (Meta Ads, TikTok Ads) — je teste et j\'optimise mes campagnes',p:2},
-        {t:'Bouche-à-oreille et réseau personnel — mes clients me recommandent',p:1},
-        {t:'Email marketing ou WhatsApp broadcast — j\'ai une liste de contacts qualifiés',p:1},
-      ]
-    }
-  },
-];
+function t(k){return(T[lang]||T.fr)[k]||T.fr[k]||k}
 
-const Q_LABELS = [
-  'Transformation','Réalisation perso','Clients aidés','Clients payants',
-  'Client idéal','Peur principale','Rêve ultime','Garantie',
-  'Témoignages','Présence sociale','Modèle de prix','Canal de vente'
-];
+// ── NICHES
+const NICHES={
+fr:[
+  {id:'business',icon:'💼',label:'Business & Entrepreneuriat',pa:4},
+  {id:'immo',icon:'🏠',label:'Immobilier & Investissement',pa:5},
+  {id:'finance',icon:'📈',label:'Finance & Trading',pa:4},
+  {id:'fitness',icon:'💪',label:'Fitness & Santé',pa:3},
+  {id:'beauty',icon:'💄',label:'Beauté & Lifestyle',pa:3},
+  {id:'education',icon:'📚',label:'Formation & Compétences',pa:3},
+  {id:'tech',icon:'💻',label:'Tech & Digital',pa:4},
+  {id:'emploi',icon:'🎯',label:'Emploi & Carrière',pa:2},
+  {id:'parenting',icon:'👨‍👩‍👧',label:'Parentalité & Famille',pa:2},
+  {id:'other',icon:'✨',label:'Autre',pa:3},
+],
+ar:[
+  {id:'business',icon:'💼',label:'الأعمال والريادة',pa:4},
+  {id:'immo',icon:'🏠',label:'العقارات والاستثمار',pa:5},
+  {id:'finance',icon:'📈',label:'المال والتداول',pa:4},
+  {id:'fitness',icon:'💪',label:'اللياقة والصحة',pa:3},
+  {id:'beauty',icon:'💄',label:'الجمال ونمط الحياة',pa:3},
+  {id:'education',icon:'📚',label:'التدريب والمهارات',pa:3},
+  {id:'tech',icon:'💻',label:'التقنية والرقمي',pa:4},
+  {id:'emploi',icon:'🎯',label:'التوظيف والمهنة',pa:2},
+  {id:'parenting',icon:'👨‍👩‍👧',label:'الأسرة والتربية',pa:2},
+  {id:'other',icon:'✨',label:'أخرى',pa:3},
+],
+en:[
+  {id:'business',icon:'💼',label:'Business & Entrepreneurship',pa:4},
+  {id:'immo',icon:'🏠',label:'Real Estate & Investment',pa:5},
+  {id:'finance',icon:'📈',label:'Finance & Trading',pa:4},
+  {id:'fitness',icon:'💪',label:'Fitness & Health',pa:3},
+  {id:'beauty',icon:'💄',label:'Beauty & Lifestyle',pa:3},
+  {id:'education',icon:'📚',label:'Education & Skills',pa:3},
+  {id:'tech',icon:'💻',label:'Tech & Digital',pa:4},
+  {id:'emploi',icon:'🎯',label:'Employment & Career',pa:2},
+  {id:'parenting',icon:'👨‍👩‍👧',label:'Parenting & Family',pa:2},
+  {id:'other',icon:'✨',label:'Other',pa:3},
+]};
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
-
-let lead = {};
-let niche = '';
-let answers = []; // [{id, text, pts, max}]
-let currentQ = 0;
-let chatHistory = [];
-let chatContext = '';
-let chatQuestionPts = 0;
-
-// ─── NAVIGATION ──────────────────────────────────────────────────────────────
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
+// ── PRICING MODELS
+function getPricingModels(){
+  const l=lang;
+  return[
+    {id:'diy',icon:'🎯',
+     title:l==='ar'?'Do It Yourself':l==='en'?'Do It Yourself':'Do It Yourself',
+     range:'$19 – $49 /mois',
+     desc:l==='ar'?'محتوى حصري، الأعضاء يعملون بأنفسهم، ترد أحياناً':l==='en'?'Exclusive content, members self-guided, you reply occasionally':'Contenu exclusif, membres autonomes, tu réponds occasionnellement'},
+    {id:'diwy',icon:'🤝',
+     title:l==='ar'?'Do It With You':l==='en'?'Do It With You':'Do It With You',
+     range:'$49 – $99 /mois',
+     desc:l==='ar'?'كوتشينغ جماعي، جلسات مباشرة، مخصص جزئياً':l==='en'?'Group coaching, live sessions, partially personalized':'Coaching groupe, sessions live, semi-personnalisé'},
+    {id:'dify',icon:'🚀',
+     title:l==='ar'?'Do It For You':l==='en'?'Do It For You':'Do It For You',
+     range:'$99 – $999 /mois',
+     desc:l==='ar'?'مرافقة شخصية كاملة، مثل وكالة':l==='en'?'Full personal accompaniment, like an agency':'Accompagnement personnalisé complet, comme une agence'},
+  ];
 }
 
-// ─── PAGE 0: LEAD ────────────────────────────────────────────────────────────
-
-function goToNiche() {
-  const fields = ['prenom','nom','email','whatsapp','domaine','reseau','followers','lien'];
-  let ok = true;
-  fields.forEach(f => {
-    const el = document.getElementById('f-' + f);
-    const val = el.value.trim();
-    if (!val) { el.classList.add('err'); ok = false; }
-    else el.classList.remove('err');
-  });
-  if (!ok) return;
-
-  lead = {
-    prenom: document.getElementById('f-prenom').value.trim(),
-    nom: document.getElementById('f-nom').value.trim(),
-    email: document.getElementById('f-email').value.trim(),
-    whatsapp: document.getElementById('f-whatsapp').value.trim(),
-    domaine: document.getElementById('f-domaine').value.trim(),
-    reseau: document.getElementById('f-reseau').value,
-    followers: document.getElementById('f-followers').value.trim(),
-    lienProfil: document.getElementById('f-lien').value.trim(),
-    contenu: document.getElementById('f-contenu').value,
-  };
-  buildNicheGrid();
-  showPage('p1');
+function getQuestions(){
+  const l=lang;
+  return[
+    {id:'outcome',type:'textarea',
+     title:l==='ar'?'ما هو التحول الملموس الذي تقدمه؟':l==='en'?'What is the concrete transformation you offer?':'Quelle est la transformation concrète que tu offres ?',
+     hint:l==='ar'?'مثال: أساعد النساء على فقدان 10 كيلو في 90 يوماً':l==='en'?'Ex: I help women lose 10kg in 90 days':'Ex: J\'aide les femmes à perdre 10kg en 90 jours',
+     ph:l==='ar'?'اكتب التحول الذي تقدمه...':l==='en'?'Write the transformation you offer...':'Décris la transformation que tu offres...',
+     hasAssist:true,w:5,
+     score:(v)=>v.length>30?5:v.length>10?2:0,
+     reaction:(v)=>v.length>30?{t:'good',m:l==='ar'?'✅ تحول محدد وواضح':l==='en'?'✅ Specific and clear':'✅ Transformation précise et claire'}:{t:'warn',m:l==='ar'?'💡 حاول أن تكون أكثر تحديداً':l==='en'?'💡 Try to be more specific':'💡 Essaie d\'être plus précis(e)'},
+     assistContext:l==='ar'?'ساعد المستخدم على وصف التحول الذي يقدمه. أعطه 3 أمثلة ملموسة من نيشات مختلفة وشجعه على أن يكون دقيقاً.':l==='en'?'Help the user describe their transformation. Give 3 concrete examples from different niches and encourage specificity.':'Aide l\'utilisateur à décrire sa transformation. Donne 3 exemples concrets de niches différentes et encourage la précision.'
+    },
+    {id:'self',type:'choice',
+     title:l==='ar'?'هل حققت هذا التحول بنفسك؟':l==='en'?'Have you personally achieved this transformation?':'As-tu toi-même réalisé cette transformation ?',
+     hint:l==='ar'?'المصداقية الشخصية هي الأساس في السوق المغربي':l==='en'?'Personal credibility is the foundation in the Moroccan market':'La crédibilité personnelle est la base sur le marché marocain',
+     choices:[
+       {val:'yes',label:l==='ar'?'نعم، عشته شخصياً':l==='en'?'Yes, I lived it personally':'Oui, je l\'ai vécu personnellement',type:'yes'},
+       {val:'no',label:l==='ar'?'ليس بعد':l==='en'?'Not yet':'Pas encore',type:'no'}
+     ],w:10,
+     score:(v)=>v==='yes'?10:0,
+     reaction:(v)=>v==='yes'?{t:'good',m:l==='ar'?'🔥 هذا يرفع مصداقيتك بشكل كبير':l==='en'?'🔥 This massively boosts your credibility':'🔥 Ça booste énormément ta crédibilité'}:{t:'bad',m:l==='ar'?'⚠️ نقطة حرجة — المصداقية ستكون منخفضة':l==='en'?'⚠️ Critical — credibility will be low':'⚠️ Point critique — ta crédibilité sera faible'}
+    },
+    {id:'helped',type:'choice',
+     title:l==='ar'?'هل ساعدت آخرين على تحقيق هذه النتيجة؟':l==='en'?'Have you helped others achieve this result?':'As-tu aidé d\'autres personnes à obtenir ce résultat ?',
+     hint:l==='ar'?'حتى مجاناً — الشهادات تصنع الفارق':l==='en'?'Even for free — testimonials make the difference':'Même gratuitement — les témoignages font la différence',
+     choices:[
+       {val:'yes',label:l==='ar'?'نعم، لدي حالات ملموسة':l==='en'?'Yes, I have concrete cases':'Oui, j\'ai des cas concrets',type:'yes'},
+       {val:'no',label:l==='ar'?'ليس بعد':l==='en'?'Not yet':'Pas encore',type:'no'}
+     ],w:10,
+     score:(v)=>v==='yes'?10:0,
+     reaction:(v)=>v==='yes'?{t:'good',m:l==='ar'?'⭐ الإثبات الاجتماعي يرفع التحويل 40%':l==='en'?'⭐ Social proof boosts conversion 40%':'⭐ La preuve sociale booste la conversion de 40%'}:{t:'warn',m:l==='ar'?'💡 ابدأ بمساعدة 2-3 أشخاص مجاناً':l==='en'?'💡 Start by helping 2-3 people for free':'💡 Commence par aider 2-3 personnes gratos'}
+    },
+    {id:'paid',type:'choice',
+     title:l==='ar'?'هل دفع هؤلاء مقابل مساعدتك؟':l==='en'?'Did those people pay for your help?':'Ces personnes ont-elles payé pour ton aide ?',
+     hint:l==='ar'?'الدفع يثبت أن هناك قيمة حقيقية':l==='en'?'Payment validates real value':'Le paiement valide qu\'il y a une vraie valeur',
+     choices:[
+       {val:'yes',label:l==='ar'?'نعم، دفعوا':l==='en'?'Yes, they paid':'Oui, ils ont payé',type:'yes'},
+       {val:'no',label:l==='ar'?'لا، كان مجاناً':l==='en'?'No, it was free':'Non, c\'était gratuit',type:'no'}
+     ],w:5,
+     score:(v)=>v==='yes'?5:2,
+     reaction:(v)=>v==='yes'?{t:'good',m:l==='ar'?'💰 عرض مثبت بالدفع — قوي جداً':l==='en'?'💰 Payment-validated offer — very strong':'💰 Offre validée par le paiement — très solide'}:{t:'neutral',m:l==='ar'?'💡 جيد كبداية — ارفع الثمن في المرحلة القادمة':l==='en'?'💡 Good start — raise the price next time':'💡 Bon début — passe au payant la prochaine fois'}
+    },
+    {id:'icp',type:'textarea',
+     title:l==='ar'?'صف عميلك المثالي بدقة':l==='en'?'Describe your ideal client precisely':'Décris précisément ton client idéal',
+     hint:l==='ar'?'العمر، الجنس، الوضع، الموقع. "أساعد النساء" ليس ICP':l==='en'?'Age, gender, situation, location. "I help women" is not an ICP':'Âge, genre, situation, localisation. "J\'aide les femmes" n\'est pas un ICP',
+     ph:l==='ar'?'مثال: امرأة 25-35 سنة، موظفة في المغرب، تريد إنقاص الوزن...':l==='en'?'Ex: Woman 25-35, employed in Morocco, wants to lose weight...':'Ex: Femme 25-35 ans, salariée au Maroc, veut perdre du poids...',
+     hasAssist:true,w:10,
+     score:(v)=>v.length>50?10:v.length>20?5:0,
+     reaction:(v)=>v.length>50?{t:'good',m:l==='ar'?'🎯 ICP محدد — يرفع التحويل بشكل كبير':l==='en'?'🎯 Precise ICP — massively boosts conversion':'🎯 ICP précis — booste considérablement la conversion'}:{t:'warn',m:l==='ar'?'💡 كن أكثر تحديداً — العمر، الوضع، المدينة':l==='en'?'💡 Be more specific — age, situation, city':'💡 Sois plus précis(e) — âge, situation, ville'},
+     assistContext:l==='ar'?'ساعد المستخدم على تعريف عميله المثالي ICP. أعطه 3 أمثلة دقيقة من نيشات مختلفة وشجعه على التفاصيل.':l==='en'?'Help the user define their ideal client ICP. Give 3 precise examples from different niches and encourage details.':'Aide l\'utilisateur à définir son ICP. Donne 3 exemples précis de niches différentes et encourage les détails.'
+    },
+    {id:'fear',type:'textarea',
+     title:l==='ar'?'ما هو الخوف الأكبر لعميلك؟':l==='en'?'What is your client\'s biggest fear?':'Quelle est la peur principale de ton client ?',
+     hint:l==='ar'?'ما الذي يمنعه من التصرف؟':l==='en'?'What stops them from taking action?':'Qu\'est-ce qui l\'empêche de passer à l\'action ?',
+     ph:l==='ar'?'مثال: يخشى الفشل مرة أخرى...':l==='en'?'Ex: Afraid of failing again...':'Ex: Il a peur d\'échouer encore une fois...',
+     hasAssist:true,w:5,
+     score:(v)=>v.length>20?5:0,
+     reaction:(v)=>v.length>20?{t:'good',m:l==='ar'?'✅ تحديد الخوف = نسخة تسويقية أفضل':l==='en'?'✅ Fear identified = better copy':'✅ Peur identifiée = meilleur copywriting'}:{t:'neutral',m:l==='ar'?'💡 ما الذي يوقظه في الليل؟':l==='en'?'💡 What keeps them up at night?':'💡 Qu\'est-ce qui le réveille la nuit ?'},
+     assistContext:l==='ar'?'ساعد المستخدم على تحديد الخوف الأعمق لعميله. أعطه أمثلة عاطفية ومحددة.':l==='en'?'Help the user identify their client\'s deepest fear. Give emotional and specific examples.':'Aide l\'utilisateur à identifier la peur profonde de son client. Donne des exemples émotionnels et précis.'
+    },
+    {id:'dream',type:'textarea',
+     title:l==='ar'?'ما هو حلمه النهائي؟':l==='en'?'What is their ultimate dream?':'Quel est son rêve ultime ?',
+     hint:l==='ar'?'النتيجة العميقة التي يريدها حقاً':l==='en'?'The deep result they truly want':'Le résultat profond qu\'il veut VRAIMENT',
+     ph:l==='ar'?'مثال: يريد الاستقلال المالي والعيش دون ضغوط...':l==='en'?'Ex: Wants financial freedom and stress-free life...':'Ex: Retrouver sa liberté financière et vivre sans stress...',
+     hasAssist:true,w:5,
+     score:(v)=>v.length>20?5:0,
+     reaction:(v)=>v.length>20?{t:'good',m:l==='ar'?'🌟 Dream outcome واضح — أساس عرض قوي':l==='en'?'🌟 Clear dream outcome — strong offer foundation':'🌟 Dream outcome clair — base d\'une offre solide'}:{t:'neutral',m:l==='ar'?'💡 كن أكثر عمقاً وعاطفية':l==='en'?'💡 Go deeper and more emotional':'💡 Va plus en profondeur et sois émotionnel(le)'},
+     assistContext:l==='ar'?'ساعد المستخدم على تحديد الحلم العميق لعميله. أعطه أمثلة ملموسة.':l==='en'?'Help the user define their client\'s deep dream. Give concrete examples.':'Aide l\'utilisateur à définir le rêve profond de son client. Donne des exemples concrets.'
+    },
+    {id:'guarantee',type:'choice',
+     title:l==='ar'?'هل لديك ضمان على نتائجك؟':l==='en'?'Do you have a results guarantee?':'As-tu une garantie sur tes résultats ?',
+     hint:l==='ar'?'ضمان 7 أيام يرفع التحويل فوراً بنسبة 20-30%':l==='en'?'A 7-day guarantee instantly boosts conversion by 20-30%':'Une garantie 7 jours booste la conversion de 20-30% instantanément',
+     choices:[
+       {val:'yes',label:l==='ar'?'نعم، لدي ضمان':l==='en'?'Yes, I have a guarantee':'Oui, j\'ai une garantie',type:'yes'},
+       {val:'no',label:l==='ar'?'لا، بدون ضمان':l==='en'?'No, no guarantee':'Non, pas de garantie',type:'no'}
+     ],w:5,
+     score:(v)=>v==='yes'?5:0,
+     reaction:(v)=>v==='yes'?{t:'good',m:l==='ar'?'🛡️ الضمان يزيل المخاطرة — مكسب كبير':l==='en'?'🛡️ Guarantee removes risk — big win':'🛡️ La garantie supprime le risque — gros avantage'}:{t:'warn',m:l==='ar'?'💡 أضف ضمان 7 أيام — ستفاجأ':l==='en'?'💡 Add a 7-day guarantee — you\'ll be surprised':'💡 Ajoute une garantie 7 jours — tu seras surpris(e)'}
+    },
+    {id:'testimonials',type:'choice3',
+     title:l==='ar'?'هل لديك شهادات من عملاء راضين؟':l==='en'?'Do you have testimonials from satisfied clients?':'As-tu des témoignages de clients satisfaits ?',
+     hint:l==='ar'?'الإثبات الاجتماعي هو أقوى أداة بيع':l==='en'?'Social proof is the most powerful sales tool':'La preuve sociale est le levier de vente le plus puissant',
+     choices:[
+       {val:'oui',label:l==='ar'?'⭐ نعم، عدة شهادات':l==='en'?'⭐ Yes, several':'Oui, plusieurs'},
+       {val:'peu',label:l==='ar'?'1-2 شهادة':l==='en'?'1-2 testimonials':'1-2 témoignages'},
+       {val:'non',label:l==='ar'?'❌ لا شيء':l==='en'?'❌ None':'❌ Aucun'}
+     ],w:5,
+     score:(v)=>v==='oui'?5:v==='peu'?3:0,
+     reaction:(v)=>v==='oui'?{t:'good',m:l==='ar'?'⭐ استخدم هذه الشهادات في كل مكان':l==='en'?'⭐ Use these testimonials everywhere':'⭐ Utilise ces témoignages partout'}:v==='peu'?{t:'neutral',m:l==='ar'?'💡 جيد — ستحصل على المزيد قريباً':l==='en'?'💡 Good — you\'ll get more soon':'💡 Bien — tu en auras d\'autres bientôt'}:{t:'warn',m:l==='ar'?'💡 الخطوة 1: اطلب من 3 أشخاص التجربة مجاناً':l==='en'?'💡 Step 1: Ask 3 people to try for free':'💡 Étape 1 : demande à 3 personnes d\'essayer gratuitement'}
+    }
+  ];
 }
 
-// ─── PAGE 1: NICHE ───────────────────────────────────────────────────────────
+// ── STATE
+let lang='fr',qIndex=0,answers={},questions=[],totalScore=0;
+let selectedNiche=null,selectedPriceModel=null;
+let mainChatHistory=[],mainChatInit=false;
+let assistHistory=[],currentAssistContext='';
+let leadName='',leadEmail='',leadContentCreator='',leadWhatsapp='',leadNetwork='',leadFollowers='',leadProfile='';
 
-function buildNicheGrid() {
-  const grid = document.getElementById('nicheGrid');
-  grid.innerHTML = NICHES.map(n => `
-    <div class="niche-card" onclick="selectNiche('${n.id}')">
-      <div class="niche-emoji">${n.emoji}</div>
-      <div class="niche-label">${n.label}</div>
-    </div>
-  `).join('');
-}
-
-function selectNiche(id) {
-  niche = id;
-  answers = [];
-  currentQ = 0;
-  showQuestion(0);
-  showPage('pq');
-}
-
-// ─── QUESTIONS ───────────────────────────────────────────────────────────────
-
-function showQuestion(n) {
-  currentQ = n;
-  const q = Q[n];
-  const pct = Math.round((n / Q.length) * 100);
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressLabel').textContent = `Question ${n + 1} / ${Q.length}`;
-  document.getElementById('qNum').textContent = `Question ${n + 1} / ${Q.length}`;
-  document.getElementById('qText').textContent = q.text;
-
-  const raw = q.choices._all || q.choices[niche] || q.choices['autre'] || [];
-  const nLabel = NICHES.find(x => x.id === niche)?.label || 'ton domaine';
-
-  let html = raw.map((c, i) =>
-    `<button class="choice-btn" onclick="selectChoice(${c.p}, ${q.max}, '${escQ(c.t)}')">${c.t}</button>`
-  ).join('');
-  html += `<button class="choice-btn autre" onclick="openChat('${escQ(q.text)}', ${q.max})">💬 Autre — le coach m'aide à répondre</button>`;
-  document.getElementById('qChoices').innerHTML = html;
-}
-
-function escQ(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
-
-function selectChoice(pts, max, text) {
-  answers[currentQ] = { id: Q[currentQ].id, label: Q_LABELS[currentQ], text, pts, max };
-  if (currentQ + 1 < Q.length) {
-    showQuestion(currentQ + 1);
+function selectLeadContentCreator(radio){
+  leadContentCreator=radio.value;
+  const yesLabel=document.getElementById('lead-cc-yes-label');
+  const noLabel=document.getElementById('lead-cc-no-label');
+  if(radio.value==='yes'){
+    yesLabel.style.borderColor='var(--primary)';yesLabel.style.background='var(--primary-light)';yesLabel.style.color='var(--primary)';
+    noLabel.style.borderColor='var(--border)';noLabel.style.background='var(--surface)';noLabel.style.color='var(--text2)';
   } else {
-    showResult();
+    noLabel.style.borderColor='var(--primary)';noLabel.style.background='var(--primary-light)';noLabel.style.color='var(--primary)';
+    yesLabel.style.borderColor='var(--border)';yesLabel.style.background='var(--surface)';yesLabel.style.color='var(--text2)';
   }
 }
 
-// ─── CHATBOT ─────────────────────────────────────────────────────────────────
-
-const SYSTEM_PROMPT = `Tu es le Coach Societiz. Tu n'es PAS ChatGPT. Tu as 2 ans d'expérience terrain avec des centaines de communautés marocaines réelles, condensés en un seul cerveau.
-
-Tu aides le créateur à répondre à la question du questionnaire de score. Sois direct, court, concret. Maximum 3 phrases par réponse. Pose une seule question courte à la fois. Utilise des exemples marocains. Jamais de markdown, pas de listes, pas de **.
-
-Societiz est la seule plateforme de communautés payantes qui accepte le paiement en DH, crypte le contenu et bloque le partage de compte. Mentionne-le naturellement quand c'est pertinent, jamais en mode pub.`;
-
-function openChat(questionText, maxPts) {
-  chatContext = questionText;
-  chatQuestionPts = maxPts;
-  chatHistory = [];
-  document.getElementById('chatMsgs').innerHTML = '';
-  document.getElementById('chatContinue').style.display = 'none';
-  document.getElementById('chatInp').value = '';
-  document.getElementById('chatOverlay').classList.add('open');
-
-  const intro = `Je vais t'aider à répondre à : "${questionText}"\n\nDis-moi en quelques mots ce que tu fais, je t'aide à formuler ta réponse.`;
-  addChatMsg('b', intro);
-  chatHistory.push({ role: 'assistant', content: intro });
+function startQuizFromLead(){
+  const firstEl=document.getElementById('lead-firstname');
+  const lastEl=document.getElementById('lead-lastname');
+  const emailEl=document.getElementById('lead-email');
+  if(!firstEl.value.trim()){firstEl.focus();firstEl.style.borderColor='var(--red)';return;}
+  if(!lastEl.value.trim()){lastEl.focus();lastEl.style.borderColor='var(--red)';return;}
+  if(!emailEl.value.trim()||!emailEl.value.includes('@')){emailEl.focus();emailEl.style.borderColor='var(--red)';return;}
+  leadName=firstEl.value.trim()+' '+lastEl.value.trim();
+  leadEmail=emailEl.value.trim();
+  leadWhatsapp=document.getElementById('lead-whatsapp').value.trim();
+  leadNetwork=document.getElementById('lead-network').value;
+  leadFollowers=document.getElementById('lead-followers').value.trim();
+  leadProfile=document.getElementById('lead-profile').value.trim();
+  startQuiz();
 }
 
-function closeChat() {
-  document.getElementById('chatOverlay').classList.remove('open');
+function setLang(l){
+  lang=l;
+  document.documentElement.dir=l==='ar'?'rtl':'ltr';
+  document.documentElement.lang=l;
+  ['fr','ar','en'].forEach(x=>document.getElementById('lb-'+x).classList.toggle('active',x===l));
+  questions=getQuestions();
+  applyIntro();
+  if(currentScreen==='q') renderQ();
 }
 
-function addChatMsg(role, text) {
-  const msgs = document.getElementById('chatMsgs');
-  const div = document.createElement('div');
-  div.className = `cmsg ${role}`;
-  div.innerHTML = `
-    <div class="chat-av ${role}">${role === 'b' ? '🤖' : '👤'}</div>
-    <div class="cbubble">${text.replace(/\n/g,'<br>')}</div>`;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
+function applyIntro(){
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.innerHTML=v};
+  set('i-badge',t('badge'));set('i-h1',t('h1'));set('i-time',t('time'));
+  set('i-desc',t('desc'));set('i-alert',t('alert'));
+  set('i-mrr-num',t('mrr_num'));set('i-mrr-sub',t('mrr_sub'));set('i-mrr-right',t('mrr_right'));
+  set('i-start',t('start'));
 }
 
-function addChatTyping() {
-  const msgs = document.getElementById('chatMsgs');
-  const div = document.createElement('div');
-  div.className = 'cmsg b';
-  div.id = 'chatTyping';
-  div.innerHTML = `<div class="chat-av b">🤖</div><div class="cbubble"><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
+let currentScreen='intro';
+function goScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','exit'));
+  const el=document.getElementById('sc-'+name);
+  if(el){el.classList.add('active');currentScreen=name;}
 }
 
-function chatKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+function startQuiz(){
+  questions=getQuestions();
+  qIndex=0;answers={};totalScore=0;selectedNiche=null;selectedPriceModel=null;
+  goScreen('q');renderQ();setProgress(0);
 }
 
-async function sendChat() {
-  const inp = document.getElementById('chatInp');
-  const msg = inp.value.trim();
-  if (!msg) return;
-  inp.value = '';
-  addChatMsg('u', msg);
-  chatHistory.push({ role: 'user', content: msg });
-  addChatTyping();
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 250,
-        system: SYSTEM_PROMPT + `\n\nQuestion du questionnaire : "${chatContext}"`,
-        messages: chatHistory,
-      }),
-    });
-    const data = await res.json();
-    document.getElementById('chatTyping')?.remove();
-    let reply;
-    if (!res.ok || !data.content?.[0]?.text) {
-      if (res.status === 401) reply = 'Problème de configuration, contactez l\'administrateur.';
-      else if (res.status === 429) reply = 'Trop de requêtes, réessaie dans quelques secondes.';
-      else if (res.status === 529) reply = 'Service temporairement surchargé, réessaie dans 30 secondes.';
-      else reply = 'Je n\'ai pas pu répondre, réessaie.';
-    } else {
-      reply = data.content[0].text;
+function renderQ(){
+  const q=questions[qIndex];if(!q)return;
+  const total=questions.length+3; // +pricing +niche +formula
+  const stepN=qIndex+1;
+  document.getElementById('q-step-txt').textContent=`${stepN} ${t('step_of')} ${total}`;
+  document.getElementById('q-title').textContent=q.title;
+  document.getElementById('q-hint').textContent=q.hint||'';
+  document.getElementById('q-reaction').innerHTML='';
+  document.getElementById('q-assist-wrap').innerHTML='';
+  document.getElementById('q-enter-hint').innerHTML=`<span class="enter-key">↵</span> ${t('enter')}`;
+  document.getElementById('q-back').textContent=t('back');
+  document.getElementById('q-back').style.display=qIndex===0?'none':'block';
+  document.getElementById('q-next').textContent=t('next');
+  const saved=answers[q.id];
+  const content=document.getElementById('q-content');
+  if(q.type==='textarea'){
+    content.innerHTML=`<textarea class="q-input" id="q-inp" rows="3" placeholder="${q.ph||''}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();nextQ()}">${saved||''}</textarea>`;
+    setTimeout(()=>document.getElementById('q-inp')?.focus(),80);
+    if(q.hasAssist){
+      document.getElementById('q-assist-wrap').innerHTML=`
+        <button class="assist-btn" onclick="openAssist('${q.id}')">${t('assist')}</button>
+        <div class="not-gpt-pill" id="not-gpt-pill">${t('not_gpt')}</div>`;
     }
-    addChatMsg('b', reply);
-    chatHistory.push({ role: 'assistant', content: reply });
-
-    if (chatHistory.filter(m => m.role === 'user').length >= 2) {
-      document.getElementById('chatContinue').style.display = 'block';
-    }
-  } catch (e) {
-    document.getElementById('chatTyping')?.remove();
-    addChatMsg('b', 'Erreur de connexion. Réessaie.');
+  }else if(q.type==='choice'){
+    content.innerHTML=`<div class="choices">${q.choices.map((c,i)=>`<div class="choice ${saved===c.val?'sel-'+c.type:''}" onclick="selectChoice('${c.val}','${c.type}')" id="c-${c.val}"><div class="choice-key">${['A','B'][i]}</div>${c.label}</div>`).join('')}</div>`;
+  }else if(q.type==='choice3'){
+    content.innerHTML=`<div class="choices">${q.choices.map((c,i)=>`<div class="choice ${saved===c.val?'sel':''}" onclick="selectChoice3('${c.val}')" id="c-${c.val}"><div class="choice-key">${['A','B','C'][i]}</div>${c.label}</div>`).join('')}</div>`;
   }
+  if(saved) showReaction(q.reaction(saved));
 }
 
-function continueFromChat() {
-  closeChat();
-  const halfPts = Math.round(chatQuestionPts * 0.5);
-  selectChoice(halfPts, chatQuestionPts, 'Réponse personnalisée (via coach)');
+function selectChoice(val,type){
+  const q=questions[qIndex];answers[q.id]=val;
+  document.querySelectorAll('.choice').forEach(e=>e.classList.remove('sel-yes','sel-no','sel'));
+  document.getElementById('c-'+val)?.classList.add('sel-'+type);
+  showReaction(q.reaction(val));
+  setTimeout(()=>nextQ(),550);
+}
+function selectChoice3(val){
+  const q=questions[qIndex];answers[q.id]=val;
+  document.querySelectorAll('.choice').forEach(e=>e.classList.remove('sel','sel-yes','sel-no'));
+  document.getElementById('c-'+val)?.classList.add('sel');
+  showReaction(q.reaction(val));
+  setTimeout(()=>nextQ(),550);
+}
+function showReaction(r){
+  document.getElementById('q-reaction').innerHTML=`<div class="reaction"><div class="rbadge ${r.t}">${r.m}</div></div>`;
+}
+function nextQ(){
+  const q=questions[qIndex];
+  const inp=document.getElementById('q-inp');
+  if(inp) answers[q.id]=inp.value.trim();
+  if(!answers[q.id]&&q.type==='textarea'){inp?.focus();return;}
+  if(!answers[q.id]) return;
+  totalScore+=q.score(answers[q.id]);
+  qIndex++;
+  setProgress(Math.round(((qIndex)/(questions.length+3))*100));
+  const sc=document.getElementById('sc-q');
+  sc.classList.add('exit');
+  setTimeout(()=>{sc.classList.remove('exit');
+    if(qIndex>=questions.length){showPricing();}else{renderQ();}
+  },200);
+}
+function prevQ(){
+  if(qIndex===0){goScreen('lead');return;}
+  const prev=questions[qIndex-1];
+  if(answers[prev.id]) totalScore-=prev.score(answers[prev.id]);
+  qIndex--;
+  setProgress(Math.round((qIndex/(questions.length+3))*100));
+  renderQ();
 }
 
-// ─── RESULT ──────────────────────────────────────────────────────────────────
-
-async function showResult() {
-  const total = answers.reduce((s, a) => s + (a?.pts || 0), 0);
-  const pct = total;
-
-  document.getElementById('scoreNum').textContent = total;
-  document.getElementById('resultPrenom').textContent = `${lead.prenom}, voici ton score Societiz`;
-
-  const circle = document.getElementById('scoreCircle');
-  circle.style.setProperty('--pct', pct);
-
-  if (total >= 70) {
-    document.getElementById('scoreLabel').textContent = '🔥 Offre prête — Lance-toi !';
-  } else if (total >= 50) {
-    document.getElementById('scoreLabel').textContent = '💪 Bonne base — Quelques ajustements à faire';
-  } else {
-    document.getElementById('scoreLabel').textContent = '🌱 Offre à consolider — On va travailler ça';
+// ── PRICING
+function showPricing(){
+  goScreen('price');
+  const total=questions.length+3;
+  document.getElementById('price-step-txt').textContent=`${questions.length+1} ${t('step_of')} ${total}`;
+  document.getElementById('price-title').textContent=t('price_title');
+  document.getElementById('price-hint').textContent=t('price_hint');
+  document.getElementById('price-monthly-label').textContent=t('price_monthly');
+  document.getElementById('price-yearly-label').textContent=t('price_yearly');
+  document.querySelector('#sc-price .q-back').textContent=t('back');
+  document.querySelector('#sc-price .q-next').textContent=t('next');
+  const models=getPricingModels();
+  document.getElementById('pricing-cards').innerHTML=models.map(m=>`
+    <div class="price-card ${selectedPriceModel===m.id?'sel':''}" onclick="selectPriceModel('${m.id}')" id="pm-${m.id}">
+      <div class="price-card-icon">${m.icon}</div>
+      <div class="price-card-title">${m.title}</div>
+      <div class="price-card-range">${m.range}</div>
+      <div class="price-card-desc">${m.desc}</div>
+    </div>`).join('');
+  if(answers.price_monthly) document.getElementById('price-monthly').value=answers.price_monthly;
+  if(answers.price_yearly) document.getElementById('price-yearly').value=answers.price_yearly;
+  setProgress(Math.round(((questions.length+1)/(questions.length+3))*100));
+}
+function selectPriceModel(id){
+  selectedPriceModel=id;
+  document.querySelectorAll('.price-card').forEach(e=>e.classList.remove('sel'));
+  document.getElementById('pm-'+id)?.classList.add('sel');
+  updatePriceTip();
+}
+function updatePriceTip(){
+  const m=document.getElementById('price-monthly').value;
+  const y=document.getElementById('price-yearly').value;
+  const tip=document.getElementById('price-tip');
+  if(!m) return;
+  const monthly=parseFloat(m);
+  const idealYearly=Math.round(monthly*10); // ~2 months free
+  const range=selectedPriceModel==='diy'?{min:19,max:49}:selectedPriceModel==='diwy'?{min:49,max:99}:{min:99,max:999};
+  let msg='';
+  if(monthly<range.min||monthly>range.max){
+    msg=lang==='ar'?`💡 السعر الموصى به لهذا النموذج: $${range.min} – $${range.max}/شهر`:lang==='en'?`💡 Recommended price for this model: $${range.min} – $${range.max}/month`:`💡 Prix recommandé pour ce modèle : $${range.min} – $${range.max}/mois`;
   }
+  if(m&&!y){
+    const annualMsg=lang==='ar'?` · السعر السنوي المثالي: $${idealYearly} (شهرين مجاناً)`:lang==='en'?` · Ideal annual price: $${idealYearly} (2 months free)`:` · Prix annuel idéal : $${idealYearly} (2 mois offerts)`;
+    msg+=annualMsg;
+  }
+  if(msg){tip.textContent=msg;tip.classList.add('show');}else{tip.classList.remove('show');}
+}
+function nextPrice(){
+  const m=document.getElementById('price-monthly').value;
+  if(!m){document.getElementById('price-monthly').focus();return;}
+  answers.price_monthly=m;
+  answers.price_yearly=document.getElementById('price-yearly').value;
+  answers.price_model=selectedPriceModel;
+  // Score pricing
+  const monthly=parseFloat(m);
+  const range=selectedPriceModel==='diy'?{min:19,max:49}:selectedPriceModel==='diwy'?{min:49,max:99}:{min:99,max:999};
+  const priceScore=monthly>=range.min&&monthly<=range.max?10:monthly>range.max*0.5&&monthly<range.max*1.5?5:2;
+  totalScore+=priceScore;
+  showNiche();
+}
 
+// ── NICHE
+function showNiche(){
+  goScreen('niche');
+  const total=questions.length+3;
+  document.getElementById('niche-step-txt').textContent=`${questions.length+2} ${t('step_of')} ${total}`;
+  document.getElementById('niche-title').textContent=t('niche_title');
+  document.getElementById('niche-hint').textContent=t('niche_hint');
+  document.querySelector('#sc-niche .q-back').textContent=t('back');
+  document.getElementById('niche-next').textContent=t('next');
+  const niches=NICHES[lang]||NICHES.fr;
+  document.getElementById('niche-grid').innerHTML=niches.map(n=>`
+    <div class="niche-card ${selectedNiche===n.id?'sel':''}" onclick="selectNiche('${n.id}','${n.pa}')" id="nc-${n.id}">
+      <span class="niche-icon">${n.icon}</span>${n.label}
+    </div>`).join('');
+  setProgress(Math.round(((questions.length+2)/(questions.length+3))*100));
+}
+function selectNiche(id,pa){
+  selectedNiche=id;answers.niche=id;answers.niche_pa=parseInt(pa);
+  document.querySelectorAll('.niche-card').forEach(e=>e.classList.remove('sel'));
+  document.getElementById('nc-'+id)?.classList.add('sel');
+  // Score niche vs problem
+  const nicheScore=parseInt(pa)*2; // max 10
+  // Cross with outcome quality
+  const outLen=answers.outcome?.length||0;
+  const selfDone=answers.self==='yes';
+  const nicheBonus=outLen>50&&selfDone?nicheScore:Math.floor(nicheScore*0.6);
+  answers.niche_score=nicheBonus;
+  totalScore+=nicheBonus;
+  const msg=parseInt(pa)>=4
+    ? (lang==='ar'?'💰 نيش ذو قدرة شرائية عالية — ممتاز':lang==='en'?'💰 High purchasing power niche — excellent':'💰 Niche à fort pouvoir d\'achat — excellent')
+    : parseInt(pa)===3
+    ? (lang==='ar'?'✅ نيش جيد — تأكد من تقديم قيمة واضحة':lang==='en'?'✅ Good niche — ensure clear value':'✅ Bon niche — assure-toi de proposer une valeur claire')
+    : (lang==='ar'?'💡 قدرة شرائية منخفضة — ستحتاج إلى ضمان واضح وقيمة استثنائية':lang==='en'?'💡 Low purchasing power — you\'ll need a clear guarantee and exceptional value':'💡 Faible pouvoir d\'achat — tu auras besoin d\'une garantie claire et d\'une valeur exceptionnelle');
+  document.getElementById('niche-reaction').innerHTML=`<div class="rbadge ${parseInt(pa)>=4?'good':parseInt(pa)===3?'neutral':'warn'}">${msg}</div>`;
+}
+function nextNiche(){
+  if(!selectedNiche){return;}
+  showFormula();
+}
+
+// ── FORMULA
+function showFormula(){
+  goScreen('formula');
+  const total=questions.length+3;
+  document.getElementById('f-step-txt').textContent=`${questions.length+3} ${t('step_of')} ${total}`;
+  document.getElementById('f-title').textContent=t('f_title');
+  document.getElementById('f-hint').textContent=t('f_hint');
+  document.getElementById('f-label').textContent=t('f_label');
+  document.querySelector('#sc-formula .q-back').textContent=t('back');
+  document.querySelector('#sc-formula .q-next').textContent=t('calc');
+  const icp=answers.icp?.slice(0,35)||'';
+  const outcome=answers.outcome?.slice(0,35)||'';
+  const help=lang==='ar'?'أساعد':lang==='en'?'I help':'J\'aide';
+  const to=lang==='ar'?'على':lang==='en'?'to':'à';
+  const inn=lang==='ar'?'في':lang==='en'?'in':'en';
+  const without=lang==='ar'?'بدون':lang==='en'?'without':'sans';
+  const timePh=lang==='ar'?'[المدة]':lang==='en'?'[duration]':'[durée]';
+  const effortPh=lang==='ar'?'[الجهد الرئيسي]':lang==='en'?'[main effort]':'[effort principal]';
+  document.getElementById('f-text').innerHTML=`
+    <strong>${help}</strong>
+    <input class="f-inp" id="f-icp" value="${icp}" placeholder="${lang==='ar'?'عميلك المثالي':lang==='en'?'your ICP':'ton ICP'}"/>
+    ${to}
+    <input class="f-inp" id="f-outcome" value="${outcome}" placeholder="${lang==='ar'?'النتيجة':lang==='en'?'result':'résultat'}"/>
+    ${inn}
+    <input class="f-inp" id="f-time" value="" placeholder="${timePh}" style="min-width:80px"/>
+    ${without}
+    <input class="f-inp" id="f-effort" value="" placeholder="${effortPh}"/>`;
+  setProgress(95);
+}
+function goResult(){
+  answers.f_icp=document.getElementById('f-icp')?.value||'';
+  answers.f_outcome=document.getElementById('f-outcome')?.value||'';
+  answers.f_time=document.getElementById('f-time')?.value||'';
+  answers.f_effort=document.getElementById('f-effort')?.value||'';
+  totalScore=Math.min(100,totalScore);
+  goScreen('result');
+  renderResult();
+  setProgress(100);
+}
+
+// ── RESULT
+function renderResult(){
+  const s=totalScore;
+  const color=s>=80?'#16A34A':s>=60?'#D97706':'#DC2626';
+  const deg=Math.round((s/100)*360);
+  const ring=document.getElementById('score-ring');
+  ring.style.setProperty('--rc',color);
+  ring.style.setProperty('--rd',deg+'deg');
+  document.getElementById('score-big').textContent=s;
+  document.getElementById('score-big').style.color=color;
+  const key=s>=80?'great':s>=60?'mid':'bad';
+  document.getElementById('res-title').textContent=t('res_'+key);
+  document.getElementById('res-title').style.color=color;
+  document.getElementById('res-sub').textContent=t('res_'+key+'_sub');
   // Breakdown
-  const breakdown = document.getElementById('breakdownList');
-  breakdown.innerHTML = answers.map(a => {
-    if (!a) return '';
-    const bpct = Math.round((a.pts / a.max) * 100);
-    return `<div class="breakdown-row">
-      <div class="breakdown-label">${a.label}</div>
-      <div class="breakdown-bar"><div class="breakdown-fill" style="width:${bpct}%"></div></div>
-      <div class="breakdown-pts">${a.pts}/${a.max}</div>
-    </div>`;
-  }).join('');
-
-  // Tags
-  const sorted = [...answers].filter(Boolean).sort((a, b) => (b.pts / b.max) - (a.pts / a.max));
-  const top3 = sorted.slice(0, 3);
-  const bot3 = sorted.slice(-3).reverse();
-
-  document.getElementById('tagFortes').innerHTML = top3.map(a =>
-    `<span class="tag tag-green">${a.label}</span>`).join('');
-  document.getElementById('tagAmeliorer').innerHTML = bot3
-    .filter(a => a.pts < a.max)
-    .map(a => `<span class="tag tag-red">${a.label}</span>`).join('');
-
-  // CTA conditionnel
-  const ctaBox = document.getElementById('ctaBox');
-  if (total >= 70 && lead.contenu === 'oui') {
-    ctaBox.innerHTML = `
-      <div class="cta-box cta-green">
-        <h3>🚀 Tu es prêt(e) à lancer ta communauté !</h3>
-        <p>Ton offre est solide et tu crées déjà du contenu. Lance maintenant et commence à encaisser en DH dès aujourd'hui.</p>
-        <a class="btn-cta" href="https://societiz.com/communities/new" target="_blank">Créer ma communauté →</a>
-      </div>`;
-  } else if (total >= 70 && lead.contenu !== 'oui') {
-    ctaBox.innerHTML = `
-      <div class="cta-box cta-green">
-        <h3>🚀 Ton offre est prête — 2 étapes !</h3>
-        <p>Lance ta communauté ET rejoins la communauté gratuite pour apprendre à créer du contenu qui convertit.</p>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
-          <a class="btn-cta" href="https://societiz.com/communities/new" target="_blank">Créer ma communauté →</a>
-          <a class="btn-cta" href="https://societiz.com/communities/ccc?page=1" target="_blank" style="background:var(--primary-light);color:var(--primary)">Rejoindre la communauté gratuite →</a>
-        </div>
-      </div>`;
+  const s1=Math.min(30,(answers.self==='yes'?10:0)+(answers.helped==='yes'?10:0)+(answers.paid==='yes'?5:2)+(answers.outcome?.length>20?3:0));
+  const s2=Math.min(20,(answers.icp?.length>50?10:5)+(answers.fear?.length>20?5:0)+(answers.dream?.length>20?5:0));
+  const s3=Math.max(0,s-s1-s2);
+  const gc=(v,m)=>v/m>=.7?'g':v/m>=.5?'w':'b';
+  document.getElementById('blocks-row').innerHTML=[
+    {v:s1,m:30,l:t('b1')},{v:Math.max(0,s2),m:20,l:t('b2')},{v:Math.max(0,s3),m:50,l:t('b3')}
+  ].map(b=>`<div class="bcard ${gc(b.v,b.m)}"><div class="bcard-num">${b.v}</div><div class="bcard-lbl">${b.l}</div><div style="font-size:10px;color:var(--text3)">/${b.m}</div></div>`).join('');
+  // Recos
+  const recos=[];
+  if(s>=75) recos.push({c:'g',i:'🚀',t:lang==='ar'?`<strong>عرض ممتاز!</strong> المنشئون الذين يحققون +$10,000/شهر على Societiz بدأوا بنفس هذا الملف.`:lang==='en'?`<strong>Excellent offer!</strong> Creators generating +$10K/month on Societiz started with exactly this profile.`:`<strong>Offre excellente !</strong> Les créateurs à +$10K/mois sur Societiz ont démarré avec exactement ce profil.`});
+  if(answers.self!=='yes') recos.push({c:'b',i:'⚠️',t:lang==='ar'?'<strong>نقطة حرجة:</strong> لم تحقق هذا التحول بنفسك. مصداقيتك ستكون منخفضة جداً.':lang==='en'?'<strong>Critical:</strong> You haven\'t achieved this transformation yourself. Your credibility will be very low.':'<strong>Point critique :</strong> Tu n\'as pas réalisé cette transformation toi-même. Ta crédibilité sera très faible.'});
+  if(answers.helped!=='yes') recos.push({c:'w',i:'💡',t:lang==='ar'?'<strong>لا توجد حالات:</strong> ابدأ بمساعدة 2-3 أشخاص مجاناً للحصول على شهادات حقيقية.':lang==='en'?'<strong>No cases:</strong> Start by helping 2-3 people for free to get real testimonials.':'<strong>Pas de cas :</strong> Commence par aider 2-3 personnes gratos pour avoir de vrais témoignages.'});
+  if(!answers.guarantee||answers.guarantee==='no') recos.push({c:'w',i:'🛡️',t:lang==='ar'?'<strong>أضف ضماناً:</strong> ضمان 7 أيام يرفع التحويل فوراً بنسبة 20-30%.':lang==='en'?'<strong>Add a guarantee:</strong> 7-day guarantee instantly boosts conversion by 20-30%.':'<strong>Ajoute une garantie :</strong> Un remboursement 7 jours booste la conversion de 20-30%.'});
+  if(answers.niche_pa<=2) recos.push({c:'w',i:'🇲🇦',t:lang==='ar'?'<strong>قدرة شرائية منخفضة:</strong> ركز على إبراز القيمة الاقتصادية لعرضك وضمان نتائج ملموسة.':lang==='en'?'<strong>Low purchasing power:</strong> Focus on highlighting the economic value and guaranteeing concrete results.':'<strong>Faible pouvoir d\'achat :</strong> Mets en avant la valeur économique de ton offre et garantis des résultats concrets.'});
+  document.getElementById('recos').innerHTML=recos.map(r=>`<div class="reco ${r.c}"><div class="reco-ico">${r.i}</div><div>${r.t}</div></div>`).join('');
+  // CTA — conditional based on score and content creator status
+  const ctaColor=s>=70?'linear-gradient(135deg,#16A34A,#15803D)':'linear-gradient(135deg,#3B30E8,#6366F1)';
+  const ctaBox=document.getElementById('cta-box');
+  ctaBox.style.background=ctaColor;
+  if(s>=70){
+    if(leadContentCreator==='yes'){
+      // High score + content creator → one button to create community
+      ctaBox.innerHTML=`<h3>🚀 Tu es prêt(e) à lancer !</h3><p>Ton offre est solide et tu crées déjà du contenu. Lance ta communauté maintenant.</p><button class="cta-box-btn" onclick="window.open('https://societiz.com/communities/new','_blank')" style="color:#16A34A">Créer ma communauté sur Societiz →</button>`;
+    } else {
+      // High score + does NOT create content → two buttons
+      ctaBox.innerHTML=`<h3>🚀 Ton offre est prête — 2 étapes !</h3><p>Lance ta communauté ET apprends à créer du contenu pour la remplir.</p><div style="display:flex;flex-direction:column;gap:10px;margin-top:4px"><button class="cta-box-btn" onclick="window.open('https://societiz.com/communities/new','_blank')" style="color:#16A34A">Étape 1 : Créer ma communauté →</button><button class="cta-box-btn" onclick="window.open('https://societiz.com/communities/ccc?page=1','_blank')" style="color:#3B30E8;background:rgba(255,255,255,.85)">Étape 2 : Apprendre le contenu →</button></div>`;
+    }
   } else {
-    ctaBox.innerHTML = `
-      <div class="cta-box cta-yellow">
-        <h3>💡 Rejoins la communauté gratuite</h3>
-        <p>Apprends à construire une offre solide avant de lancer. Des centaines de créateurs y sont déjà.</p>
-        <a class="btn-cta" href="https://societiz.com/communities/ccc?page=1" target="_blank">Rejoindre la communauté gratuite →</a>
-      </div>`;
+    // Low score → join free community
+    ctaBox.innerHTML=`<h3>💡 Rejoins la communauté gratuite</h3><p>Apprends à construire une offre solide avant de lancer. Des centaines de créateurs y sont déjà.</p><button class="cta-box-btn" onclick="window.open('https://societiz.com/communities/ccc?page=1','_blank')" style="color:#3B30E8">Rejoins la communauté gratuite →</button>`;
   }
+  document.getElementById('open-chat-link').textContent=t('open_chat');
+}
 
-  showPage('presult');
+// ── ASSIST
+function openAssist(qid){
+  const q=questions.find(x=>x.id===qid);
+  if(!q) return;
+  assistHistory=[];
+  currentAssistContext=q.assistContext||'';
+  document.getElementById('assist-title').textContent=t('assist_title');
+  document.getElementById('assist-msgs').innerHTML='';
+  document.getElementById('assist-overlay').classList.add('open');
+  document.getElementById('assist-inp').value='';
+  // Auto greeting with examples
+  const greeting=lang==='ar'?'مرحباً! سأساعدك على الإجابة بشكل أفضل. إليك بعض الأمثلة الملموسة 👇':lang==='en'?'Hello! I\'ll help you answer better. Here are some concrete examples 👇':'Salut ! Je vais t\'aider à mieux répondre. Voici quelques exemples concrets 👇';
+  addAssistMsg('b',greeting);
+  sendAssistAuto(q);
+}
+async function sendAssistAuto(q){
+  document.getElementById('assist-send').disabled=true;
+  addAssistTyping();
+  const contextPrompt = `${q.assistContext}
 
-  // Save lead
-  try {
-    await fetch('/api/leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...lead, niche: NICHES.find(n => n.id === niche)?.label, score: total }),
+Tu es le Coach Societiz — pas ChatGPT. Tu as 2 ans d'expérience avec des centaines de communautés marocaines réelles.
+${getSocietizPitch(lang)}
+${lang==='ar'?'أعطني 3 أمثلة ملموسة وقصيرة مناسبة للسوق المغربي. بدون مقدمات. استخدم الأرقام والتفاصيل.':lang==='en'?'Give me 3 concrete short examples relevant to the Moroccan market. No preamble. Use numbers and details.':'Donne-moi 3 exemples concrets et courts pertinents pour le marché marocain. Sans préambule. Utilise des chiffres et des détails.'}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,
+        messages:[{role:'user',content:contextPrompt}]})
     });
-  } catch (e) { /* silent */ }
+    const data=await res.json();
+    removeAssistTyping();
+    addAssistMsg('b',data.content?.[0]?.text||'...');
+  }catch(e){removeAssistTyping();addAssistMsg('b','...');}
+  document.getElementById('assist-send').disabled=false;
+}
+async function sendAssist(){
+  const inp=document.getElementById('assist-inp');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  addAssistMsg('u',msg);
+  assistHistory.push({role:'user',content:msg});
+  document.getElementById('assist-send').disabled=true;
+  addAssistTyping();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,
+        system:currentAssistContext,
+        messages:assistHistory})
+    });
+    const data=await res.json();
+    removeAssistTyping();
+    const reply=data.content?.[0]?.text||'...';
+    addAssistMsg('b',reply);
+    assistHistory.push({role:'assistant',content:reply});
+  }catch(e){removeAssistTyping();addAssistMsg('b','...');}
+  document.getElementById('assist-send').disabled=false;
+}
+function closeAssist(){document.getElementById('assist-overlay').classList.remove('open');}
+function addAssistMsg(role,text){
+  const msgs=document.getElementById('assist-msgs');
+  const div=document.createElement('div');div.className='amsg '+role;
+  div.innerHTML=`<div class="amsg-av ${role}">${role==='b'?'🤖':'👤'}</div><div class="amsg-bubble ${role}">${text.replace(/\n/g,'<br/>')}</div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+function addAssistTyping(){
+  const msgs=document.getElementById('assist-msgs');
+  const div=document.createElement('div');div.className='amsg b';div.id='at';
+  div.innerHTML='<div class="amsg-av b">🤖</div><div class="amsg-bubble b"><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+function removeAssistTyping(){document.getElementById('at')?.remove();}
+
+// ── MAIN CHAT
+function openChat(){
+  goScreen('chat');
+  document.getElementById('chat-name').textContent=t('chat_name');
+  document.getElementById('chat-status').textContent=t('chat_status');
+  document.getElementById('chat-back-btn').textContent=t('chat_back');
+  document.getElementById('chat-inp').placeholder=lang==='ar'?'اطرح سؤالاً...':lang==='en'?'Ask a question...':'Pose une question...';
+  if(!mainChatInit){mainChatInit=true;initMainChat();}
+}
+function getSocietizPitch(l){
+  return l==='ar'?`
+معلومات عن Societiz (استخدمها بشكل طبيعي عند الحاجة، لا تُسوّق بشكل مباشر):
+- الوصف: المنصة الوحيدة المخصصة للمنشئين المغاربة
+- الدفع: MAD مباشرة بالبطاقة (75% من المشتريات في المغرب بالبطاقة، مشكلة الكوتة)
+- الأمان: تشفير المحتوى — لا تصوير شاشة، لا تنزيل، علامة مائية على التسجيلات
+- التسويق: Societiz يجلب العملاء — 50% من الاشتراك لكل عميل مُحال
+- الخطط: $9/شهر + 11% عمولة · $99/شهر + 6% عمولة
+- تطبيق موبايل متاح
+`:l==='en'?`
+Societiz info (use naturally when relevant, never hard-sell):
+- Description: Only platform dedicated to Moroccan creators
+- Payments: MAD directly by card (75% of Moroccan purchases = card, foreign currency quota problem)  
+- Security: Content encryption — no screenshot, no download, video watermarking
+- Marketing: Societiz brings clients — 50% of subscription per referred member
+- Plans: $9/month + 11% commission · $99/month + 6% commission
+- Mobile app available
+`:`
+Infos Societiz (utilise naturellement quand pertinent, jamais de hard-sell) :
+- Description : Seule plateforme dédiée aux créateurs marocains
+- Paiement : MAD directement par carte (75% des achats au Maroc = carte, problème de dotation)
+- Sécurité : Encryption contenu — pas de screenshot, pas de download, watermarking vidéo
+- Marketing : Societiz ramène des clients — 50% de l'abonnement par membre référé
+- Plans : $9/mois + 11% commission · $99/mois + 6% commission  
+- Application mobile disponible
+`;}
+
+function getContextualPrompt(qId, answers, lang){
+  const base = {
+    outcome: lang==='ar'?'المستخدم يصف تحوله. ساعده على أن يكون أكثر تحديداً وقياساً. اسأل: كم كيلو؟ في كم يوم؟ كم دولاراً؟':lang==='en'?'User is describing their transformation. Help them be more specific and measurable. Ask: how many kg? in how many days? how much money?':'L\'utilisateur décrit sa transformation. Aide-le à être plus précis et mesurable. Demande : combien de kg ? en combien de jours ? combien d\'argent ?',
+    icp: lang==='ar'?'المستخدم يعرّف عميله المثالي. ساعده على التفصيل: العمر، الجنس، المدينة، الوضع المهني، مستوى الدخل. "أساعد النساء" ليس ICP.':lang==='en'?'User is defining their ideal client. Help them detail: age, gender, city, professional situation, income level. "I help women" is not an ICP.':'L\'utilisateur définit son ICP. Aide-le à détailler : âge, genre, ville, situation pro, niveau de revenu. "J\'aide les femmes" n\'est pas un ICP.',
+    fear: lang==='ar'?'المستخدم يحدد خوف عميله. اسأله: ما الذي يمنعه من الشراء؟ ما الذي جربه من قبل وفشل؟ الخوف من الفشل مجدداً؟':lang==='en'?'User identifying client fear. Ask: what stops them from buying? what have they tried before that failed? fear of failing again?':'L\'utilisateur identifie la peur de son client. Demande : qu\'est-ce qui l\'empêche d\'acheter ? qu\'a-t-il essayé avant qui a échoué ? peur d\'échouer encore ?',
+    dream: lang==='ar'?'المستخدم يحدد حلم عميله. ادفعه نحو الحلم العميق العاطفي، ليس المادي فقط. الحرية، الاعتراف، الأمان.':lang==='en'?'User identifying client dream. Push toward the deep emotional dream, not just material. Freedom, recognition, security.':'L\'utilisateur identifie le rêve de son client. Pousse vers le rêve profond émotionnel, pas juste matériel. Liberté, reconnaissance, sécurité.',
+    default: lang==='ar'?'كن مفيداً وموجزاً.':lang==='en'?'Be helpful and concise.':'Sois utile et concis.'
+  };
+  return base[qId] || base.default;
 }
 
-// ─── PDF ─────────────────────────────────────────────────────────────────────
+function initMainChat(){
+  const sys=`Tu es le Coach Societiz. IMPORTANT : Tu n'es PAS ChatGPT ou un bot générique. Tu es 2 ans de testing avec des centaines de communautés marocaines réelles, condensés en un seul cerveau. Chaque conseil vient de vraies communautés qui ont réussi ou échoué — pas d'internet.
 
-function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const total = answers.reduce((s, a) => s + (a?.pts || 0), 0);
-  const nicheLabel = NICHES.find(n => n.id === niche)?.label || niche;
-  const W = 210;
-  const PAGE_H = 297;
-  const MARGIN_BOTTOM = 30;
-  let y = 20;
+Score créateur: ${totalScore}/100
+Transformation: ${answers.outcome||'N/A'}
+Réalisé lui-même: ${answers.self==='yes'?'Oui':'Non'}
+Aidé d'autres: ${answers.helped==='yes'?'Oui':'Non'}
+Peur client: ${answers.fear||'N/A'}
+Rêve client: ${answers.dream||'N/A'}
+ICP: ${answers.icp||'N/A'}
+Niche: ${answers.niche||'N/A'} (pouvoir d'achat: ${answers.niche_pa||'N/A'}/5)
+Modèle prix: ${answers.price_model||'N/A'} · Mensuel: $${answers.price_monthly||'N/A'} · Annuel: $${answers.price_yearly||'N/A'}
+Formule: J'aide ${answers.f_icp} à ${answers.f_outcome} en ${answers.f_time} sans ${answers.f_effort}
+Garantie: ${answers.guarantee==='yes'?'Oui':'Non'}
+Témoignages: ${answers.testimonials||'N/A'}
 
-  function checkPage(needed = 10) {
-    if (y + needed > PAGE_H - MARGIN_BOTTOM) {
-      doc.addPage();
-      y = 20;
-    }
+${getSocietizPitch(lang)}
+
+RÈGLES :
+- Réponds en ${lang==='fr'?'français':lang==='ar'?'arabe':'anglais'}
+- Max 150 mots par réponse
+- 1 action concrète immédiate par réponse
+- Mentionne Societiz naturellement quand c'est pertinent, jamais en mode pub
+- Si le score < 60, concentre-toi sur l'amélioration de l'offre d'abord
+- Si le score >= 80, oriente vers le lancement sur Societiz`;
+  mainChatHistory=[{role:'system',content:sys}];
+  const g=totalScore>=80?(lang==='ar'?'مرحباً! نتيجتك ممتازة 🎉 عرضك جاهز. ما هو سؤالك؟':lang==='en'?'Hello! Excellent score 🎉 Your offer is ready. What\'s your question?':'Bravo ! Excellent score 🎉 Ton offre est prête. Qu\'est-ce que tu veux approfondir ?'):totalScore>=60?(lang==='ar'?'أهلاً! نتيجة جيدة ✅ دعني أساعدك في تحسين النقاط الضعيفة.':lang==='en'?'Hello! Good score ✅ Let me help improve weak points.':'Salut ! Bon score ✅ Laisse-moi t\'aider sur les points faibles.'):(lang==='ar'?'مرحباً! العمل يبدأ الآن 💪 لنبنِ عرضاً قوياً. ما هو سؤالك؟':lang==='en'?'Hello! Work starts now 💪 Let\'s build a strong offer. What\'s your question?':'Salut ! Le travail commence maintenant 💪 Construisons une offre solide. C\'est quoi ta question ?');
+  addMainMsg('b',g);
+}
+function addMainMsg(role,text){
+  const msgs=document.getElementById('chat-msgs');
+  const div=document.createElement('div');div.className='cmsg '+role;
+  div.innerHTML=`<div class="cmsg-av ${role}">${role==='b'?'🤖':'👤'}</div><div class="cbubble ${role}">${text.replace(/\n/g,'<br/>')}</div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+  if(role!=='typing') mainChatHistory.push({role:role==='b'?'assistant':'user',content:text});
+}
+async function sendMainChat(){
+  const inp=document.getElementById('chat-inp');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';addMainMsg('u',msg);
+  document.getElementById('chat-send').disabled=true;
+  const msgs=document.getElementById('chat-msgs');
+  const td=document.createElement('div');td.className='cmsg b';td.id='mtyp';
+  td.innerHTML='<div class="cmsg-av b">🤖</div><div class="cbubble b"><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
+  msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
+        system:mainChatHistory[0].content,
+        messages:mainChatHistory.slice(1).filter(m=>m.role!=='system').concat([{role:'user',content:msg}])})
+    });
+    const data=await res.json();
+    document.getElementById('mtyp')?.remove();
+    addMainMsg('b',data.content?.[0]?.text||'...');
+  }catch(e){document.getElementById('mtyp')?.remove();addMainMsg('b','...');}
+  document.getElementById('chat-send').disabled=false;
+  // Save conversation to Firebase (background)
+  saveConversationToFirebase();
+}
+
+async function saveConversationToFirebase(){
+  try{
+    const sessionId = 'session_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const payload = {
+      timestamp: new Date().toISOString(),
+      lang: lang,
+      score: totalScore,
+      answers: {
+        outcome: answers.outcome||'',
+        self: answers.self||'',
+        helped: answers.helped||'',
+        icp: answers.icp||'',
+        niche: answers.niche||'',
+        price_model: answers.price_model||'',
+        price_monthly: answers.price_monthly||'',
+        guarantee: answers.guarantee||'',
+      },
+      conversation_length: mainChatHistory.filter(m=>m.role!=='system').length,
+      messages: mainChatHistory.filter(m=>m.role!=='system').slice(-20)
+    };
+    await fetch(`https://firestore.googleapis.com/v1/projects/societiz-app/databases/(default)/documents/score_conversations/${sessionId}`,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({fields:{
+        timestamp:{stringValue:payload.timestamp},
+        lang:{stringValue:payload.lang},
+        score:{integerValue:payload.score},
+        niche:{stringValue:payload.answers.niche},
+        price_model:{stringValue:payload.answers.price_model},
+        conversation_length:{integerValue:payload.conversation_length},
+        data:{stringValue:JSON.stringify(payload)}
+      }})
+    });
+  }catch(e){/* silent */}
+}
+
+function setProgress(pct){document.getElementById('prog').style.width=pct+'%';}
+
+// ── PDF GENERATION
+function generatePDF(){
+  if(typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined'){
+    alert('Chargement du PDF en cours, réessaie dans quelques secondes...');return;
+  }
+  const {jsPDF:jsPDFClass}=window.jspdf||{jsPDF:window.jsPDF};
+  const doc=new jsPDFClass({orientation:'portrait',unit:'mm',format:'a4'});
+  const pageW=210,pageH=297,margin=18,colW=pageW-margin*2;
+  let y=margin;
+
+  function checkPage(needed){
+    if(y+needed>pageH-margin){doc.addPage();y=margin;}
   }
 
-  // Header band
-  doc.setFillColor(59, 48, 232);
-  doc.rect(0, 0, W, 36, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Societiz Score', 20, 15);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Rapport personnalise de ton offre de communaute', 20, 24);
-  doc.text(new Date().toLocaleDateString('fr-FR'), 20, 31);
+  // Header background
+  doc.setFillColor(59,48,232);
+  doc.rect(0,0,pageW,42,'F');
 
-  y = 50;
-  doc.setTextColor(17, 24, 39);
-  doc.setFontSize(13);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${lead.prenom} ${lead.nom}`, 20, y);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(107, 114, 128);
-  doc.text(`Niche : ${nicheLabel}   |   Reseau : ${lead.reseau}   |   Followers : ${Number(lead.followers).toLocaleString('fr-FR')}`, 20, y + 7);
-
-  y += 22;
-  // Score big
-  doc.setFillColor(238, 240, 255);
-  doc.roundedRect(20, y, W - 40, 22, 4, 4, 'F');
-  doc.setFontSize(22);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(59, 48, 232);
-  doc.text(`Score : ${total} / 100`, W / 2, y + 14, { align: 'center' });
-
-  y += 32;
-  checkPage(20);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(17, 24, 39);
-  doc.text('Detail par critere', 20, y);
-  y += 7;
-
-  answers.filter(Boolean).forEach(a => {
-    checkPage(12);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(107, 114, 128);
-    doc.text(a.label, 20, y);
-    doc.setTextColor(17, 24, 39);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${a.pts}/${a.max}`, W - 30, y, { align: 'right' });
-
-    // Bar bg
-    doc.setFillColor(229, 231, 235);
-    doc.roundedRect(70, y - 3.5, 100, 3, 1, 1, 'F');
-    // Bar fill
-    const bw = Math.round((a.pts / a.max) * 100);
-    if (bw > 0) {
-      doc.setFillColor(59, 48, 232);
-      doc.roundedRect(70, y - 3.5, bw, 3, 1, 1, 'F');
-    }
-    y += 9;
-  });
-
-  y += 6;
-  // Points forts
-  const sorted = [...answers].filter(Boolean).sort((a, b) => (b.pts / b.max) - (a.pts / a.max));
-  checkPage(30);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(22, 163, 74);
-  doc.text('Points forts', 20, y);
-  y += 6;
-  sorted.slice(0, 3).forEach(a => {
-    checkPage(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(17, 24, 39);
-    doc.text(`• ${a.label} (${a.pts}/${a.max})`, 24, y);
-    y += 6;
-  });
-
-  y += 4;
-  const weak = sorted.filter(a => a.pts < a.max).slice(-3).reverse();
-  checkPage(30);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(220, 38, 38);
-  doc.text('A ameliorer en priorite', 20, y);
-  y += 6;
-  weak.forEach(a => {
-    checkPage(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(17, 24, 39);
-    doc.text(`• ${a.label} (${a.pts}/${a.max})`, 24, y);
-    y += 6;
-  });
-
-  // Recommandation de prix
-  const pricingAnswer = answers.find(a => a.id === 'pricing');
-  if (pricingAnswer) {
-    let prixReco = '';
-    if (pricingAnswer.text.startsWith('Do It Yourself')) prixReco = 'Prix recommande : 19$ - 49$ / mois';
-    else if (pricingAnswer.text.startsWith('Do It With You')) prixReco = 'Prix recommande : 49$ - 99$ / mois';
-    else if (pricingAnswer.text.startsWith('Do It For You')) prixReco = 'Prix recommande : 100$+ / mois';
-    if (prixReco) {
-      checkPage(24);
-      y += 8;
-      doc.setFillColor(238, 240, 255);
-      doc.roundedRect(20, y, W - 40, 18, 3, 3, 'F');
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(59, 48, 232);
-      doc.text('Recommandation de prix', 28, y + 7);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(17, 24, 39);
-      doc.text(prixReco, 28, y + 14);
-      y += 22;
-    }
-  }
-
-  // Footer — sur la dernière page après le contenu
-  checkPage(30);
-  y += 8;
-  doc.setFillColor(59, 48, 232);
-  doc.rect(0, y, W, 27, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Societiz — La plateforme de communautes payantes #1 au Maroc', W / 2, y + 9, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
+  // Title
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.text('Societiz — Rapport de Score',margin,16);
+  doc.setFontSize(11);doc.setFont('helvetica','normal');
+  const nameStr=leadName?` · ${leadName}`:'';
+  doc.text(`Score Offre Créateur${nameStr}`,margin,24);
   doc.setFontSize(9);
-  doc.text('Paiement en DH · Contenu crypte · Anti-partage de compte', W / 2, y + 16, { align: 'center' });
-  doc.text('societiz.com', W / 2, y + 22, { align: 'center' });
+  doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}${leadEmail?' · '+leadEmail:''}`,margin,31);
+  y=52;
 
-  doc.save(`societiz-score-${lead.prenom}-${lead.nom}.pdf`);
+  // Score circle (visual text block)
+  const s=totalScore;
+  const scoreColor=s>=80?[22,163,74]:s>=60?[217,119,6]:[220,38,38];
+  doc.setFillColor(...scoreColor);
+  doc.circle(pageW/2,y+14,16,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(18);doc.setFont('helvetica','bold');
+  doc.text(String(s),pageW/2,y+17,{align:'center'});
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('/100',pageW/2,y+23,{align:'center'});
+  y+=36;
+
+  // Score label
+  const scoreLabel=s>=80?'Offre excellente — Prêt(e) à lancer !':s>=60?'Bonnes bases — Quelques ajustements':'Offre à retravailler avant de lancer';
+  doc.setTextColor(scoreColor[0],scoreColor[1],scoreColor[2]);
+  doc.setFontSize(14);doc.setFont('helvetica','bold');
+  doc.text(scoreLabel,pageW/2,y,{align:'center'});
+  y+=10;
+
+  // Category blocks
+  const s1=Math.min(30,(answers.self==='yes'?10:0)+(answers.helped==='yes'?10:0)+(answers.paid==='yes'?5:2)+(answers.outcome?.length>20?3:0));
+  const s2=Math.min(20,(answers.icp?.length>50?10:5)+(answers.fear?.length>20?5:0)+(answers.dream?.length>20?5:0));
+  const s3=Math.max(0,s-s1-s2);
+  const blocks=[{label:'Crédibilité',v:s1,m:30},{label:'Précision ICP',v:s2,m:20},{label:'Force de l\'offre',v:s3,m:50}];
+  const bW=(colW-8)/3;
+  checkPage(22);
+  doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.setTextColor(100,100,100);
+  doc.text('DÉTAIL PAR CATÉGORIE',margin,y);
+  y+=6;
+  blocks.forEach((b,i)=>{
+    const bx=margin+i*(bW+4);
+    const ratio=b.v/b.m;
+    const bc=ratio>=.7?[22,163,74]:ratio>=.5?[217,119,6]:[220,38,38];
+    doc.setFillColor(ratio>=.7?240:ratio>=.5?254:255,ratio>=.7?253:ratio>=.5?249:241,ratio>=.7?244:ratio>=.5?235:241);
+    doc.setDrawColor(...bc);
+    doc.roundedRect(bx,y,bW,18,2,2,'FD');
+    doc.setTextColor(...bc);
+    doc.setFontSize(14);doc.setFont('helvetica','bold');
+    doc.text(String(b.v),bx+bW/2,y+11,{align:'center'});
+    doc.setFontSize(7);doc.setFont('helvetica','normal');
+    doc.setTextColor(100,100,100);
+    doc.text(b.label,bx+bW/2,y+16,{align:'center'});
+    doc.text('/'+b.m,bx+bW/2,y+20,{align:'center'});
+  });
+  y+=28;
+
+  // Breakdown per question
+  checkPage(14);
+  doc.setFontSize(11);doc.setFont('helvetica','bold');
+  doc.setTextColor(59,48,232);
+  doc.text('Détail par question',margin,y);
+  y+=7;
+
+  const qs=getQuestions();
+  qs.forEach(q=>{
+    checkPage(14);
+    const val=answers[q.id]||'—';
+    const sc=q.score(val);
+    const maxSc=q.w||5;
+    const ratio=sc/maxSc;
+    const lineColor=ratio>=.8?[22,163,74]:ratio>=.5?[217,119,6]:[220,38,38];
+    doc.setFillColor(248,249,250);
+    doc.setDrawColor(229,231,235);
+    doc.roundedRect(margin,y,colW,12,2,2,'FD');
+    doc.setTextColor(17,24,39);
+    doc.setFontSize(8);doc.setFont('helvetica','bold');
+    const titleFr=q.title.replace(/<[^>]+>/g,'');
+    doc.text(titleFr.substring(0,60)+(titleFr.length>60?'...':''),margin+3,y+5);
+    doc.setFontSize(7);doc.setFont('helvetica','normal');
+    doc.setTextColor(107,114,128);
+    const valDisplay=String(val).substring(0,55)+(String(val).length>55?'...':'');
+    doc.text(valDisplay,margin+3,y+9.5);
+    doc.setTextColor(...lineColor);
+    doc.setFontSize(9);doc.setFont('helvetica','bold');
+    doc.text(`${sc}/${maxSc}`,margin+colW-8,y+7,{align:'center'});
+    y+=14;
+  });
+
+  // Points forts
+  checkPage(16);
+  doc.setFontSize(11);doc.setFont('helvetica','bold');
+  doc.setTextColor(22,163,74);
+  doc.text('Points forts',margin,y);
+  y+=6;
+  const forts=[];
+  if(answers.self==='yes') forts.push('Tu as toi-même réalisé la transformation — crédibilité maximale.');
+  if(answers.helped==='yes') forts.push('Tu as déjà aidé d\'autres personnes — preuve sociale disponible.');
+  if(answers.paid==='yes') forts.push('Ton offre a déjà été validée par le paiement.');
+  if(answers.guarantee==='yes') forts.push('Tu proposes une garantie — ça booste la conversion de 20-30%.');
+  if(answers.testimonials==='oui') forts.push('Tu as plusieurs témoignages clients — utilise-les partout.');
+  if(answers.icp?.length>50) forts.push('Ton ICP est bien défini — la conversion sera meilleure.');
+  if(forts.length===0) forts.push('Continue à travailler tes fondations — chaque effort compte.');
+  forts.forEach(f=>{
+    checkPage(8);
+    doc.setFillColor(240,253,244);doc.setDrawColor(187,247,208);
+    doc.roundedRect(margin,y,colW,8,2,2,'FD');
+    doc.setTextColor(21,128,61);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('✓  '+f,margin+3,y+5.5);
+    y+=10;
+  });
+
+  // Points à travailler
+  checkPage(16);
+  y+=4;
+  doc.setFontSize(11);doc.setFont('helvetica','bold');
+  doc.setTextColor(220,38,38);
+  doc.text('Points à travailler',margin,y);
+  y+=6;
+  const travail=[];
+  if(answers.self!=='yes') travail.push('Réalise toi-même la transformation pour crédibiliser ton offre.');
+  if(answers.helped!=='yes') travail.push('Aide 2-3 personnes gratuitement pour obtenir des témoignages réels.');
+  if(!answers.guarantee||answers.guarantee==='no') travail.push('Ajoute une garantie 7 jours — ça réduit le risque perçu immédiatement.');
+  if(answers.testimonials==='non') travail.push('Collecte des témoignages avant de lancer — même 1 seul suffit pour commencer.');
+  if(!answers.icp||answers.icp.length<20) travail.push('Affine ton ICP : âge, genre, ville, situation, niveau de revenu.');
+  if(travail.length===0) travail.push('Continue à optimiser — maintien de la qualité est la clé.');
+  travail.forEach(tr=>{
+    checkPage(8);
+    doc.setFillColor(255,241,241);doc.setDrawColor(254,202,202);
+    doc.roundedRect(margin,y,colW,8,2,2,'FD');
+    doc.setTextColor(185,28,28);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('→  '+tr,margin+3,y+5.5);
+    y+=10;
+  });
+
+  // CTA Societiz
+  checkPage(30);
+  y+=6;
+  doc.setFillColor(59,48,232);
+  doc.roundedRect(margin,y,colW,28,3,3,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(12);doc.setFont('helvetica','bold');
+  doc.text(s>=70?'Lance ta communauté sur Societiz':'Rejoins la communauté gratuite Societiz',pageW/2,y+10,{align:'center'});
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text(s>=70?'societiz.com/communities/new':'societiz.com/communities/ccc',pageW/2,y+18,{align:'center'});
+  doc.setFontSize(8);doc.setTextColor(200,200,255);
+  doc.text('La seule plateforme dédiée aux créateurs marocains · Paiement en MAD · Application mobile',pageW/2,y+24,{align:'center'});
+
+  doc.save(`societiz-score-${leadName||'rapport'}-${Date.now()}.pdf`);
 }
+
+// INIT
+applyIntro();
+questions=getQuestions();
 </script>
 </body>
 </html>
