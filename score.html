@@ -215,16 +215,19 @@ body{font-family:'Nunito','Noto Sans Arabic',sans-serif;background:var(--bg);col
 .chat-send:disabled{opacity:.4;cursor:not-allowed}
 .chat-send svg{width:14px;height:14px;fill:#fff}
 
-@media(max-width:600px){
+@media(max-width:820px){
   .pricing-cards{grid-template-columns:1fr}
   .price-inputs{grid-template-columns:1fr}
   .blocks-row{grid-template-columns:1fr}
   .niche-grid{grid-template-columns:1fr}
-  html,body{overflow:auto}
-  .screen{position:relative;min-height:calc(100vh - 100px);opacity:1!important;transform:none!important;pointer-events:all!important}
-  .screen:not(.active){display:none}
+  html,body{overflow-y:auto!important;overflow-x:hidden!important;height:auto!important;-webkit-overflow-scrolling:touch}
+  .main{overflow:visible!important;height:auto!important;min-height:100vh}
+  .screen{position:relative!important;inset:auto!important;min-height:auto!important;opacity:1!important;transform:none!important;pointer-events:all!important;justify-content:flex-start!important;padding:24px 20px 40px!important;overflow:visible!important}
+  .screen:not(.active){display:none!important}
   .chat-full{height:auto}
   .chat-msgs{max-height:260px}
+  .topbar{position:sticky;top:0}
+  .progress-wrap{position:sticky;top:56px;z-index:50}
 }
 </style>
 </head>
