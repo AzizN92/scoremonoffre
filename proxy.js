@@ -8,7 +8,8 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 8080;
 const API_KEY = process.env.ANTHROPIC_API_KEY;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'societiz2024';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) throw new Error('ADMIN_PASSWORD env var is required');
 const LEADS_FILE = path.join(__dirname, 'leads.json');
 
 app.use(cors({ origin: '*' }));
