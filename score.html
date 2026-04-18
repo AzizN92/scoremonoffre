@@ -809,6 +809,33 @@ function selectLeadContentCreator(radio){
   }
 }
 
+
+// Envoie le lead au serveur (tolérant aux erreurs)
+async function saveLead(partial){
+  try{
+    const body={
+      firstname:leadName.split(' ')[0]||'',
+      lastname:leadName.split(' ').slice(1).join(' ')||'',
+      email:leadEmail||'',
+      whatsapp:leadWhatsapp||'',
+      network:leadNetwork||'',
+      followers:leadFollowers||'',
+      profile:leadProfile||'',
+      content_creator:leadContentCreator||'',
+      niche:selectedNiche||'',
+      lang:lang||'fr',
+      score:partial?null:(totalScore||0),
+      answers:partial?null:JSON.stringify(answers||{}),
+      stage:partial?'lead_submitted':'quiz_completed'
+    };
+    await fetch('/api/leads',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+  }catch(e){console.warn('Lead save failed:',e);}
+}
+
 function startQuizFromLead(){
   const firstEl=document.getElementById('lead-firstname');
   const lastEl=document.getElementById('lead-lastname');
@@ -822,6 +849,7 @@ function startQuizFromLead(){
   leadNetwork=document.getElementById('lead-network').value;
   leadFollowers=document.getElementById('lead-followers').value.trim();
   leadProfile=document.getElementById('lead-profile').value.trim();
+  saveLead(true); // capture partielle au cas où l'utilisateur abandonne
   startQuiz();
 }
 
@@ -1192,6 +1220,7 @@ function goResult(){
 // ── RESULT
 function renderResult(){
   const s=totalScore;
+  saveLead(false); // capture complète avec score
   const color=s>=80?'#16A34A':s>=60?'#D97706':'#DC2626';
   const deg=Math.round((s/100)*360);
   const ring=document.getElementById('score-ring');
