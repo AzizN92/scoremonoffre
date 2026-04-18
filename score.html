@@ -227,6 +227,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <label>Lien de ton profil *</label>
           <input type="url" id="f-lien" placeholder="https://instagram.com/tonprofil">
         </div>
+        <div class="form-group full">
+          <label>Crées-tu du contenu sur les réseaux sociaux ?</label>
+          <select id="f-contenu">
+            <option value="oui">Oui, régulièrement</option>
+            <option value="non">Pas encore</option>
+          </select>
+        </div>
       </div>
       <button class="btn-primary mt16" onclick="goToNiche()">Commencer le test →</button>
     </div>
@@ -748,6 +755,7 @@ function goToNiche() {
     reseau: document.getElementById('f-reseau').value,
     followers: document.getElementById('f-followers').value.trim(),
     lienProfil: document.getElementById('f-lien').value.trim(),
+    contenu: document.getElementById('f-contenu').value,
   };
   buildNicheGrid();
   showPage('p1');
@@ -940,22 +948,31 @@ async function showResult() {
     .filter(a => a.pts < a.max)
     .map(a => `<span class="tag tag-red">${a.label}</span>`).join('');
 
-  // CTA
+  // CTA conditionnel
   const ctaBox = document.getElementById('ctaBox');
-  if (total >= 70) {
+  if (total >= 70 && lead.contenu === 'oui') {
     ctaBox.innerHTML = `
       <div class="cta-box cta-green">
         <h3>🚀 Tu es prêt(e) à lancer ta communauté !</h3>
-        <p>Ton offre est solide. Crée ta communauté sur Societiz maintenant et commence à encaisser en DH dès aujourd'hui.</p>
+        <p>Ton offre est solide et tu crées déjà du contenu. Lance maintenant et commence à encaisser en DH dès aujourd'hui.</p>
         <a class="btn-cta" href="https://societiz.com/communities/new" target="_blank">Créer ma communauté →</a>
       </div>`;
+  } else if (total >= 70 && lead.contenu !== 'oui') {
+    ctaBox.innerHTML = `
+      <div class="cta-box cta-green">
+        <h3>🚀 Ton offre est prête — 2 étapes !</h3>
+        <p>Lance ta communauté ET rejoins la communauté gratuite pour apprendre à créer du contenu qui convertit.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+          <a class="btn-cta" href="https://societiz.com/communities/new" target="_blank">Créer ma communauté →</a>
+          <a class="btn-cta" href="https://societiz.com/communities/ccc?page=1" target="_blank" style="background:var(--primary-light);color:var(--primary)">Rejoindre la communauté gratuite →</a>
+        </div>
+      </div>`;
   } else {
-    const points = bot3.filter(a => a.pts < a.max).map(a => a.label).join(', ');
     ctaBox.innerHTML = `
       <div class="cta-box cta-yellow">
-        <h3>💡 Tu y es presque — continue sur cette lancée !</h3>
-        <p>Concentre-toi sur : <strong>${points}</strong>. Une fois ces points renforcés, ton offre sera inarrêtable.</p>
-        <p style="margin-top:8px;font-size:13px">Le coach Societiz peut t'accompagner pour consolider ces points avant de lancer.</p>
+        <h3>💡 Rejoins la communauté gratuite</h3>
+        <p>Apprends à construire une offre solide avant de lancer. Des centaines de créateurs y sont déjà.</p>
+        <a class="btn-cta" href="https://societiz.com/communities/ccc?page=1" target="_blank">Rejoindre la communauté gratuite →</a>
       </div>`;
   }
 
