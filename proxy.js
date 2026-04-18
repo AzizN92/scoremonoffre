@@ -4,6 +4,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
 const fs = require('fs');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -12,11 +13,34 @@ const PORT = process.env.PORT || 8080;
 const RAW_KEY = process.env.ANTHROPIC_API_KEY || '';
 const API_KEY = RAW_KEY.replace(/[\r\n\s]/g, '').replace(/^=+/, '');
 if (!API_KEY) console.error('WARNING: ANTHROPIC_API_KEY is empty');
-else console.log('API key loaded, length:', API_KEY.length, 'starts with:', API_KEY.substring(0, 12));
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 if (!ADMIN_PASSWORD) throw new Error('ADMIN_PASSWORD env var is required');
 const LEADS_FILE = path.join(__dirname, 'leads.json');
+
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+const leadsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many submissions, please try again later.' },
+});
+
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many attempts, please try again later.' },
+});
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
@@ -29,7 +53,18 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-app.post('/api/leads', (req, res) => {
+app.post('/api/leads', leadsLimiter, (req, res) => {
+  const { firstname, lastname, email } = req.body || {};
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!firstname || !lastname || !email) {
+    return res.status(400).json({ error: 'Missing required fields: firstname, lastname, email' });
+  }
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+  if ([firstname, lastname, email].some(f => typeof f !== 'string' || f.length > 200)) {
+    return res.status(400).json({ error: 'Field exceeds maximum length of 200 characters' });
+  }
   try {
     const leads = fs.existsSync(LEADS_FILE)
       ? JSON.parse(fs.readFileSync(LEADS_FILE, 'utf8'))
@@ -43,7 +78,7 @@ app.post('/api/leads', (req, res) => {
   }
 });
 
-app.get('/api/admin/leads', (req, res) => {
+app.get('/api/admin/leads', adminLimiter, (req, res) => {
   if (req.headers['x-admin-password'] !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -57,7 +92,7 @@ app.get('/api/admin/leads', (req, res) => {
   }
 });
 
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', chatLimiter, async (req, res) => {
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
