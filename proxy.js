@@ -16,7 +16,7 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'score (1).html'));
+  res.sendFile(path.join(__dirname, 'score.html'));
 });
 
 app.get('/admin', (req, res) => {
